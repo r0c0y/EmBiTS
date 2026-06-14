@@ -1,5 +1,7 @@
 # ScribeLink: Hosted Demo Architecture & Setup
 
+[Hosted Demo v1.0](https://em-bi-ts.vercel.app/)
+
 ScribeLink is a lightweight, monochromatic, and modular document query engine. It implements a semantic search and RAG retrieval pipeline with D3-based lot lineage tracing.
 
 Every code file in this repository is strictly kept **under 100 lines** for maximum readability.
