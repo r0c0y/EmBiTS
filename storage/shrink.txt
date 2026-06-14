@@ -1,0 +1,29 @@
+DOCUMENT ID: SCL-555-MM-002
+DATE: 2026-05-15
+DEPARTMENT: Design & TCAD
+LOT ID: LOT-2026-02
+
+MINUTES OF MEETING: SCL-555 LAYOUT SHRINK AND DENSITY OPTIMIZATION REVIEW
+Location: Cleanroom Conference Room 3
+Attendees: Dr. A. K. Sharma (Design & TCAD), Mr. R. K. Verma (Fabrication Operations), Ms. S. Iyer (Quality Assurance)
+
+AGENDA:
+Evaluation of proposed layout density modifications to satisfy customer demands for lower component packaging footprints and higher die counts.
+
+DISCUSSION TOPICS & ANALYSIS:
+
+1. Layout Footprint Reduction
+Dr. Sharma presented a plan to implement a linear layout shrink to a 0.18 um minimum Metal 1 spacing rule for the next run (Lot 2). By scaling down the layout dimensions, the Gross Die Per Wafer (GDPW) will increase from 450 to 620, representing an approximate 37% increase in density. Dr. Sharma emphasized that the shrink would allow SCL to fulfill the volume requirements within the tight delivery schedule demanded by the automotive client.
+
+2. Dry-Etch Process Capability Concerns
+Mr. Verma raised process safety concerns regarding the 0.18 um layout shrink. He explained that shrinking the spacing from 0.25 um to 0.18 um increases the aspect ratio of the metal trenches. Under these conditions, the legacy dry-etch recipe CL_ETCH_M1_0.25 on the Dry-Etch-04 chamber might experience severe micro-loading (etch rate retardation in narrow gaps), leading to incomplete metal clearance. He recommended a 4-week recipe development cycle to adjust the chlorine-to-boron-trichloride ratio and optimize the over-etch step.
+
+Dr. Sharma responded that the customer timeline cannot accommodate a 4-week process development delay. He argued that the Dry-Etch-04 chamber has high-density plasma capability, which should theoretically handle the 0.18 um spacing without modifying the recipe, as the aspect ratio remains under 3:1.
+
+3. Reliability Risks
+Ms. Iyer cautioned that proceeding with the layout shrink without recipe qualification could introduce high-density bridging defects, which would compromise the Wafer Sort Yield and final package reliability. However, due to severe commercial schedule pressure, she agreed that if the engineering team proceeded immediately, Quality Assurance would monitor the Wafer Sort Yield very closely.
+
+DECISIONS & DISPOSITION:
+1. Approved layout shrink to 0.18 um minimum Metal 1 line spacing for Lot 2.
+2. Lot 2 (Lot ID: LOT-2026-02) is cleared for immediate fab release to meet customer delivery dates.
+3. The fabrication run will proceed using the existing dry-etch tool set. No new recipe qualification cycle will be performed prior to Lot 2 execution.

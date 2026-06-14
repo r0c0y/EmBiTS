@@ -1,0 +1,42 @@
+DOCUMENT ID: SCL-555-FAB-001
+DATE: 2026-03-05
+DEPARTMENT: Fabrication Operations
+LOT ID: LOT-2026-01
+
+WAFER FABRICATION INLINE METROLOGY AND RUN SUMMARY - LOT 1
+This report details the inline manufacturing measurements and parametric results for the SCL-555 Lot 1 wafers.
+
+1. PROCESS ROUTING DETAILS
+- Product Code: SCL-555-MCU-V1
+- Lot ID: LOT-2026-01 (Total: 25 wafers)
+- Substrate Batch: SCL-P100-W20
+- Lithography Tool: Stepper-02 (i-line, 365nm light source)
+- Dry Etch Tool: Dry-Etch-04 chamber
+
+2. INLINE METROLOGY SUMMARY
+- Photoresist Thickness (After Develop Inspection - ADI): 1.25 um.
+- Metal 1 ADI Critical Dimension (M1 Spacing): 0.252 um average.
+- Metal 1 After Etch Inspection (AEI) Critical Dimension (M1 Spacing):
+  - Target: 0.250 um.
+  - Measured Mean: 0.248 um.
+  - Standard Deviation (3-sigma): 0.012 um.
+  - Etch Bias: -0.004 um (well within standard limits).
+- Oxide Isolation Step Height: 3500 Angstroms.
+
+3. PARTICLE AND DEFECT DENSITY LOGS
+- Post-Metal 1 Etch Defect Density (KLA-Tencor inspection):
+  - Average Particle Count: 12 per wafer (Specification: < 30 per wafer).
+  - Scratch/Residue Excursions: 0.
+  - Resist Peeling/Delamination: 0.
+
+4. ELECTRICAL WAFER SORT (EWS) PARAMETRIC OUTCOMES
+- Wafer Sort Yield (WSY):
+  - Lot Average: 92.4%.
+  - Peak Wafer Yield: 94.1% (Wafer #08).
+  - Minimum Wafer Yield: 90.8% (Wafer #19).
+- Contact Resistance (Rc_M1_to_Silicon): 1.8 Ohms/contact.
+- Sheet Resistance (Rs_M1): 0.081 Ohm/sq.
+- Gate Oxide Leakage (Ig_leak): < 1.0 pA/um2.
+
+DISPOSITION:
+Lot 1 inline measurements and final EWS yields are stable and fully compliant with the 0.25 um design specification rules. Wafers are cleared for back-end packaging and assembly.

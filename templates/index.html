@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScribeLink | Minimal Hosted Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css"><script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo"><span class="logo-icon">▲</span><h2>ScribeLink</h2><span class="version">v1.0</span></div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="search-tab"><i data-lucide="search" class="icon"></i> Search & Trace</button>
+                <button class="nav-btn" data-tab="upload-tab"><i data-lucide="upload" class="icon"></i> Ingest Center</button>
+                <button class="nav-btn" data-tab="registry-tab"><i data-lucide="database" class="icon"></i> Master Registry</button>
+                <button class="nav-btn" data-tab="audit-tab"><i data-lucide="shield" class="icon"></i> Security Audits</button>
+            </nav>
+            <div class="user-profile">
+                <select id="user-selector" class="select-input">
+                    <option value="Dr. A. K. Sharma" data-dept="Design & TCAD">Dr. Sharma (Design)</option>
+                    <option value="Mr. H. S. Sodhi" data-dept="Fabrication Operations">Mr. Sodhi (Fab)</option>
+                    <option value="Mrs. Sunita Rao" data-dept="Quality Assurance">Mrs. Rao (QA)</option>
+                </select>
+                <span id="user-dept-display" class="user-role">Dept: Design & TCAD</span>
+            </div>
+        </aside>
+        <main class="workspace">
+            <header class="workspace-header">
+                <div><h1 id="tab-title">Search & Traceability</h1><p id="tab-subtitle" class="subtitle">Query SCL meeting records.</p></div>
+            </header>
+            <section id="search-tab" class="tab-content active">
+                <form id="search-form" class="search-form">
+                    <div class="search-input-wrapper">
+                        <input type="text" id="query-input" placeholder="Ask about a chip lot failure (e.g. 'Why did Lot 2 yield drop?')" required autocomplete="off">
+                        <button type="submit" class="search-submit">Search</button>
+                    </div>
+                    <div class="search-filters">
+                        <label for="dept-filter">Filter Department:</label>
+                        <select id="dept-filter" class="select-input">
+                            <option value="">All Departments</option>
+                            <option value="Design & TCAD">Design & TCAD</option>
+                            <option value="Fabrication Operations">Fabrication Operations</option>
+                            <option value="Quality Assurance">Quality Assurance</option>
+                        </select>
+                    </div>
+                </form>
+                <div class="results-layout">
+                    <div class="card"><h3>AI Decision Summary</h3><div id="ai-answer" class="ai-content"><p class="text-muted">Enter a query above to retrieve the decision analysis.</p></div></div>
+                    <div class="card"><h3>Cited Source Documents</h3><div id="citations-list" class="citations-list"><p class="text-muted">Sources will be cited here.</p></div></div>
+                </div>
+            </section>
+            <section id="upload-tab" class="tab-content">
+                <div class="card upload-card">
+                    <h3>Ingest New Minutes / Specifications</h3>
+                    <form id="upload-form" class="upload-form">
+                        <input type="file" id="file-input" accept=".txt,.pdf" required>
+                        <div class="form-group"><label for="upload-lot">Associate with Lot / Order ID:</label><select id="upload-lot" class="select-input" required></select></div>
+                        <button type="submit" class="submit-btn">Begin Ingestion</button>
+                    </form>
+                    <div id="upload-status"></div>
+                </div>
+            </section>
+            <section id="registry-tab" class="tab-content">
+                <div class="card"><h3>SCL Master Project & Lot Registry</h3><table id="registry-table"><thead><tr><th>Project Name</th><th>Lot ID</th><th>Release Date</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+            </section>
+            <section id="audit-tab" class="tab-content">
+                <div class="card"><h3>Compliance & Security Audit Trail</h3><table id="audit-table"><thead><tr><th>Timestamp</th><th>User</th><th>Department</th><th>Action</th><th>Details</th></tr></thead><tbody></tbody></table></div>
+            </section>
+        </main>
+    </div>
+    <div id="viewer-overlay" class="viewer-overlay" style="display: none;">
+        <div class="viewer-content">
+            <header class="viewer-header"><h3 id="viewer-title">Document Preview</h3><button id="viewer-close" class="viewer-close">&times;</button></header>
+            <div class="viewer-body">
+                <div class="viewer-left"><h4>Retrieved Section</h4><p id="viewer-snippet-text" class="viewer-snippet"></p><div class="viewer-meta"><span id="viewer-meta-dept" class="badge">Dept</span><span id="viewer-meta-date" class="badge">Date</span></div></div>
+                <div class="viewer-right"><h4>Full Document View</h4><pre id="viewer-full-text" class="viewer-pre"></pre></div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
