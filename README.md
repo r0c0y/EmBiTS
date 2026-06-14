@@ -1,50 +1,57 @@
-# ScribeLink Minimal Hosted Demo
+# ScribeLink: Hosted Demo Architecture & Setup
 
-This directory contains a lightweight, modular, and monochromatic version of the ScribeLink v1 application. It runs completely self-contained, utilizing a zero-dependency local keyword indexer in SQLite. It does not require any external LLM APIs or cloud tokens, making it safe to host publicly.
+ScribeLink is a lightweight, monochromatic, and modular document query engine. It implements a semantic search and RAG retrieval pipeline with D3-based lot lineage tracing.
 
-Every code file in this folder is strictly kept under 100 lines for maximum readability and architectural maintainability.
-
----
-
-## Technical Stack
-* **Backend**: FastAPI (Python 3.12+) & SQLite
-* **Frontend**: Vanilla HTML5 (semantic `<details>` disclosures) and modern CSS (custom variables, Outfit typography, responsive grid)
+Every code file in this repository is strictly kept **under 100 lines** for maximum readability.
 
 ---
 
-## Getting Started
+## 🏛️ System Architecture
 
-### 1. Prerequisites
-Ensure you have Python 3.12+ installed, and install the lightweight server dependencies:
-```bash
-pip install fastapi uvicorn jinja2
+```mermaid
+graph TD
+    UI[Dashboard Browser] -->|1. Submit Query| API[FastAPI Server: main.py]
+    API -->|2. Route Request| Search[Search Engine: search.py]
+    Search -->|3. Local Match| DB[(SQLite: /tmp/app.db)]
+    Search -->|4. Compile RAG context| Search
+    Search -->|5. HTTPS Request| Groq[Groq API: Llama 3.1 8b]
+    Groq -->|6. Bulleted Summary| Search
+    Search -->|7. JSON Response| UI
 ```
 
-### 2. Running the Local Server
-From within the `hosted/` directory, run:
+### Component Breakdown
+* **Frontend**: Dark monochromatic layout utilizing native semantic HTML disclosures and Lucide SVG icons. A custom regex-based markdown parser renders bullet points, bold headers, and highlighted yes/no outcomes.
+* **Serverless backend (FastAPI)**: Implements modular REST endpoints. On Vercel, the environment variable `VERCEL` is detected, copying the baseline database to `/tmp/app.db` to allow ephemeral writes in serverless functions.
+* **RAG Retrieval Engine**: Combines tokenized keyword search with Lot ID boosting. Compiles context and queries the `llama-3.1-8b-instant` model on Groq Cloud using environment-stored `GROQ_API_KEY` credentials.
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Installation
+Install production dependencies:
+```bash
+pip install fastapi uvicorn jinja2 python-multipart httpx
+```
+
+### 2. Environment Setup
+To run search queries with live AI summaries, export your Groq key:
+```bash
+export GROQ_API_KEY="your_groq_api_key"
+```
+*(If unset, the engine automatically falls back to static mock answers).*
+
+### 3. Running Locally
+Start the FastAPI server:
 ```bash
 python3 main.py
 ```
-Or run from the project root:
-```bash
-python3 -m uvicorn hosted.main:app --reload
-```
-Once started, the application will be accessible at:
-👉 **http://127.0.0.1:8000**
+Open 👉 **http://127.0.0.1:8000** in your browser.
 
 ---
 
-## Monochromatic UI Features
-* **Color System**: Monochromatic dark theme. Pure black background (`#000000`), dark gray card backgrounds (`#0a0a0a`), white text (`#ffffff`), and subtle gray borders (`#222222`).
-* **Sliders Accent Exception**: A vibrant neon cyan slider thumb (`#00e5ff`) with glowing highlight shadows on hover.
-* **Interactive Disclosures**: Native `<details>` and `<summary>` tags wrap matching citations, allowing text searchability inside closed blocks.
-
----
-
-## Running Integration Tests
-To run the automated endpoint validation tests:
+## 🧪 Verification
+To run the automated endpoint validation suite:
 ```bash
-cd hosted
 python3 -m unittest verify_hosted.py
 ```
-This tests server startup, project listing, search keyword matching, and document indexing logs.
