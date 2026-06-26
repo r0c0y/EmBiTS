@@ -60,8 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let fileQueue=[];
     const rq=()=>{const q=document.getElementById("file-queue"),c=document.getElementById("queue-count");
     if(!fileQueue.length){q.innerHTML='<p class="text-muted" style="font-size:12px">No files selected</p>';c.textContent='';return}
-    c.textContent=fileQueue.length+' file'+(fileQueue.length>1?'s':'');
-    q.innerHTML=fileQueue.map((f,i)=>`<span class="file-item ${f.status}"><span class="file-icon">${f.status==='done'?'✓':f.status==='error'?'✕':f.status==='uploading'?'⏳':'📄'}</span><span class="file-name">${f.file.name}</span>${f.status==='done'?'<span class="file-status">'+f.docId+'</span>':f.status==='pending'?'<span class="file-rm" data-idx="'+i+'">✕</span>':''}</span>`).join('')};
+    c.textContent=fileQueue.filter(f=>f.status!=='done').length+' pending';
+    q.innerHTML=fileQueue.map((f,i)=>`<span class="file-item ${f.status}${f.fadeClass?' '+f.fadeClass:''}"><span class="file-icon">${f.status==='done'?'✓':f.status==='error'?'⚠':f.status==='uploading'?'⏳':'📄'}</span><span class="file-name">${f.file.name}</span>${f.status==='done'?'<span class="file-status">'+f.docId+'</span>':f.status==='pending'?'<span class="file-rm" data-idx="'+i+'">✕</span>':''}</span>`).join('')};
     const af=(files)=>{for(const f of files)fileQueue.push({file:f,status:'pending'});rq();document.getElementById("file-input").value=''};
     const dz=document.getElementById("drop-zone"),fi2=document.getElementById("file-input");
     dz.addEventListener("click",()=>fi2.click());dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dragover")});
@@ -76,7 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const fd=new FormData();fd.append("file",item.file);fd.append("lot_id",lot);
         fd.append("user",us.value);fd.append("user_dept",us.options[us.selectedIndex].dataset.dept);
         try{const r=await fetch("/api/upload",{method:"POST",body:fd});const d=await r.json();
-        item.status=d.status==="success"?"done":"error";item.docId=d.document_id||""}catch(err){item.status="error"}rq()}});
+        item.status=d.status==="success"?"done":"error";item.docId=d.document_id||""}catch(err){item.status="error"}
+        rq();
+        if(item.status==="done"){setTimeout(()=>{item.fadeClass="fade-out";rq();
+        setTimeout(()=>{const idx=fileQueue.indexOf(item);if(idx>-1)fileQueue.splice(idx,1);rq()},300)},1414)}}});
     document.getElementById("citations-list").addEventListener("click",e=>{const btn=e.target.closest(".view-doc-btn");if(btn) openViewer(btn.dataset.id,btn.dataset.text)});
     document.getElementById("viewer-close").addEventListener("click",()=>ov.style.display="none");
     document.getElementById("viewer-download").addEventListener("click",()=>{if(window._currentDocId)window.open("/api/download/"+window._currentDocId)});

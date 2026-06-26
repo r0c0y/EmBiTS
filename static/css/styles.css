@@ -87,8 +87,8 @@ details.disclosure div{padding-top:10px;border-top:1px solid var(--border);margi
 .drop-divider{display:flex;align-items:center;gap:12px;margin:14px 0;font-size:11px;color:var(--text-muted)}.drop-divider::before,.drop-divider::after{content:"";flex:1;height:1px;background:var(--border)}
 .browse-link{color:#38bdf8;cursor:pointer;font-size:12px;text-decoration:underline;text-underline-offset:2px}.browse-link:hover{color:#7dd3fc}
 .queue-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;font-weight:600}.queue-count{font-size:11px;color:var(--text-muted);font-weight:400}
-.file-queue{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1}
-.file-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px}
+.file-queue{display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1;max-height:260px;min-height:80px}
+.file-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;transition:opacity .3s ease,max-height .3s ease,padding .3s ease,margin .3s ease}.file-item.fade-out{opacity:0;max-height:0;padding:0;margin:0;border:0;overflow:hidden}
 .file-icon{flex-shrink:0;font-size:14px}.file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 .file-rm{cursor:pointer;color:var(--text-muted);font-size:11px;padding:2px 4px;border-radius:3px}.file-rm:hover{color:#f43f5e;background:rgba(244,63,94,0.1)}
 .file-status{font-size:11px;color:var(--text-muted);flex-shrink:0}
