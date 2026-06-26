@@ -1,0 +1,24 @@
+DOCUMENT ID: SCL-555-FAB-002
+DATE: 2026-05-20
+DEPARTMENT: Fabrication Operations
+LOT ID: LOT-2026-02
+
+FABRICATION RUN REPORT: LOT 2 (LOT-2026-02)
+
+EQUIPMENT USED:
+- Photolithography: Nikon S204 stepper
+- Dry Etch: Dry-Etch-04 (Applied Materials DPS-II)
+- Oxidation: Tube furnaces (T1-T4)
+
+PROCESS FLOW:
+1. STI formation: 4000A oxide deposited
+2. Gate oxidation: 55A grown at 900°C
+3. Polysilicon deposition: 2000A
+4. N+/P+ implant activation: 1025°C RTP
+5. Metal 1 deposition: 5500A Al-Cu sputtered
+6. Metal 1 dry-etch: Used CL_ETCH_M1_0.25 recipe
+
+ANOMALIES:
+- Lot ran through Metal 1 etch using baseline recipe
+- No inline measurements taken at ADI for M1 spacing
+- Particle counts on Dry-Etch-04: Normal (15 particles)

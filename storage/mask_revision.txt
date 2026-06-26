@@ -1,0 +1,24 @@
+DOCUMENT ID: SCL-555-MR-001
+DATE: 2026-06-15
+DEPARTMENT: Design & TCAD
+LOT ID: LOT-2026-02
+
+MASK LAYOUT REVISION FOR LOT 3: SCL-555
+
+REVISION CHANGE NOTICE:
+Following the excursion review (SCL-555-MM-003) and redesign review (SCL-555-RD-001), the following mask layout revisions are approved for Lot 3.
+
+LAYOUT CHANGES:
+1. Metal 1 Minimum Width: 0.25um -> 0.22um (partial rollback)
+2. Metal 1 Minimum Spacing: 0.18um -> 0.25um (full rollback)
+3. Metal 2 rules: Unchanged (0.35um/0.35um)
+
+TAPE-OUT SCHEDULE:
+- Mask data preparation: Complete
+- Mask shop order: Placed with Photronics Inc.
+- Expected mask delivery: 2026-07-01
+
+APPROVALS:
+Dr. A. K. Sharma (Design & TCAD) - Approved
+Mr. R. K. Verma (Fabrication Operations) - Approved
+Ms. S. Iyer (Quality Assurance) - Approved

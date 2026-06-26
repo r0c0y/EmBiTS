@@ -1,0 +1,21 @@
+DOCUMENT ID: SCL-555-RD-001
+DATE: 2026-06-10
+DEPARTMENT: Design & TCAD
+LOT ID: LOT-2026-02
+
+POST-EXCURSION REDESIGN REVIEW: LOT 2 (LOT-2026-02)
+
+Attendees: Dr. A. K. Sharma, Mr. R. K. Verma, Ms. S. Iyer
+
+AGENDA:
+Root cause review of Lot 2 yield excursion and layout revision planning.
+
+DISCUSSION:
+1. Yield excursion confirmed at 45.8% due to M1 bridging shorts
+2. RIE lag identified as primary mechanism on Dry-Etch-04 with legacy CL_ETCH_M1_0.25 recipe
+3. TCAD simulations show that for 0.18um spacing with 5500A M1 thickness, the aspect ratio of 3.05:1 requires 25% longer etch time
+
+DECISIONS:
+1. Metal 1 width revised back to 0.22um for Lot 3, spacing to 0.25um
+2. New etch recipe CL_ETCH_M1_0.18 qualified for future 0.18um-node designs
+3. Process Change Notice (PCN-2026-001) issued for dry-etch toolset

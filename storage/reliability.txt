@@ -1,0 +1,26 @@
+DOCUMENT ID: SCL-555-RL-001
+DATE: 2026-04-01
+DEPARTMENT: Quality Assurance
+LOT ID: LOT-2026-01
+
+HTOL 168-HOUR BURN-IN RELIABILITY REPORT: LOT 1 (LOT-2026-01)
+
+1. TEST CONDITIONS
+- Temperature: 125°C (JEDEC standard)
+- Voltage: 2.75V (110% of nominal 2.5V)
+- Duration: 168 hours continuous
+- Sample Size: 77 units from 3 wafer zones
+
+2. RESULTS SUMMARY
+- Zero failures during 168-hour burn-in
+- Post-stress Vth drift: <30mV (within spec)
+- No metal migration observed in SEM inspection
+- Package mold compound showed no delamination
+
+3. RELIABILITY METRICS
+- FIT Rate: <10 failures per 10^9 device-hours
+- MTBF: >100,000 hours at 125°C
+- Early Life Failure Rate: 0 ppm
+
+4. QUALIFICATION STATUS
+Lot 1 is qualified for customer shipment. Product reliability meets automotive grade 2 standards.

@@ -1,0 +1,23 @@
+DOCUMENT ID: SCL-555-PKG-002
+DATE: 2026-06-05
+DEPARTMENT: Packaging & Assembly
+LOT ID: LOT-2026-02
+
+PACKAGING REPORT: LOT 2 (LOT-2026-02)
+
+ASSEMBLY LOT STATUS:
+Lot 2 was placed on hold pending QA disposition. Partial packaging completed on 200 units.
+
+PROCESS PERFORMANCE:
+1. Die Bonding: 200 units mounted on BGA substrates
+2. Wire Bonding: Gold wire (25um) on all signal pads
+3. Wire Pull Strength: Mean 8.5g (spec >5.0g)
+4. Mold Compound: Epoxy resin, transfer molded at 175°C
+
+ISSUES IDENTIFIED:
+- Die attach voiding observed in 12 units (6% rate)
+- Voids concentrated at die corners (>25% void area in 4 units)
+- Likely cause: outgassing from epoxy die-attach paste during cure
+
+DISPOSITION:
+Packaging lot quarantined pending QA decision on Lot 2 overall yield.

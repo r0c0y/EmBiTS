@@ -1,0 +1,21 @@
+DOCUMENT ID: SCL-555-QA-002
+DATE: 2026-06-08
+DEPARTMENT: Quality Assurance
+LOT ID: LOT-2026-02
+
+LOT 2 QUALITY DISPOSITION: LOT-2026-02
+
+QUALITY ASSESSMENT:
+1. Wafer Sort Yield: 45.8% (FAIL - threshold 90.0%)
+2. Package Assembly: 6% die attach voiding rate
+3. Reliability HTOL: Not initiated (lot on hold)
+
+FAILURE CLASSIFICATION:
+- Critical: Metal 1 bridging shorts due to RIE lag
+- Major: Die attach voiding in corner regions
+- Minor: Parametric Vth drift on edge dies
+
+DISPOSITION DECISION:
+Lot 2 (LOT-2026-02) is REJECTED per SCL-QA-REJ-2026-001.
+All 450 wafers placed in QA quarantine locker.
+Customer notification of delivery delay to be issued.

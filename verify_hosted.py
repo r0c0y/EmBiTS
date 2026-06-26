@@ -81,5 +81,12 @@ class TestHostedApp(unittest.TestCase):
         self.assertEqual(data["id"], "SCL-555-DS-001")
         self.assertIn("DESIGN RULE MANUAL", data["transcript_text"])
 
+    def test_6_audit_verification(self):
+        response = self.client.post("/api/audit_logs/verify")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("valid", data)
+        self.assertTrue(data["valid"])
+
 if __name__ == "__main__":
     unittest.main()

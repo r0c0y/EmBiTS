@@ -1,0 +1,21 @@
+DOCUMENT ID: SCL-555-RU-001
+DATE: 2026-06-12
+DEPARTMENT: Fabrication Operations
+LOT ID: LOT-2026-02
+
+DRY-ETCH RECIPE QUALIFICATION REPORT: CL_ETCH_M1_0.18
+
+1. NEW RECIPE PARAMETERS (vs Legacy CL_ETCH_M1_0.25)
+- Total Etch Time: 144 seconds (120s legacy, +20%)
+- Cl2/BCl3 Ratio: 4.5:1 (3.5:1 legacy)
+- Chamber Pressure: 8 mTorr (10 mTorr legacy)
+- RF Power: 600W (500W legacy)
+
+2. QUALIFICATION WAFER RESULTS
+- Etch Rate (0.18um spaces): 385 A/min (baseline: 320 A/min)
+- Etch Uniformity: <5% across 200mm wafer
+- No micro-loading observed at 0.18um spacing
+- Selectivity to photoresist: 8:1
+
+3. VERIFICATION
+Three monitor wafers processed. SEM cross-section confirms complete metal clearance with no residual bridging. Recipe approved for production use on Dry-Etch-04 chamber.
