@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fi2.addEventListener("change",()=>af(fi2.files));
     document.getElementById("file-queue").addEventListener("click",e=>{const rm=e.target.closest(".file-rm");if(rm){fileQueue.splice(parseInt(rm.dataset.idx),1);rq()}});
     document.getElementById("upload-form").addEventListener("submit",async e=>{
-        e.preventDefault();const pending=fileQueue.filter(f=>f.status==='pending');if(!pending.length)return;
+        e.preventDefault();const pending=fileQueue.filter(f=>f.status==='pending');if(!pending.length){alert("No files to upload. Drag & drop or browse to add files.");return}
         const lot=document.getElementById("upload-lot").value;
         for(const item of pending){item.status='uploading';rq();
         const fd=new FormData();fd.append("file",item.file);fd.append("lot_id",lot);
