@@ -9,6 +9,8 @@ from search import execute_trace
 from audit_ledger import log_audit, verify_audit_ledger
 from lineage import create_edge, delete_edge
 
+init_db()
+
 app = FastAPI(title="ScribeLink Demo", description="Hosted ScribeLink with full graph & citation lineage")
 BASE_DIR = os.path.dirname(__file__)
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")

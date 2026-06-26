@@ -3,4 +3,3 @@ jinja2
 python-multipart
 uvicorn
 httpx
-psycopg2-binary

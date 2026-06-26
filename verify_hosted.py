@@ -3,14 +3,15 @@ import os
 import shutil
 from fastapi.testclient import TestClient
 from main import app
+import database
 from database import DB_PATH, init_db
 
 class TestHostedApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Remove old test database if exists
         if os.path.exists(DB_PATH):
             os.remove(DB_PATH)
+        database._initialized = False
         init_db()
         cls.client = TestClient(app)
 

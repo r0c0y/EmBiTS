@@ -1,8 +1,11 @@
 import os
 from db_adapter import get_db_connection, IS_PG
 DB_PATH = os.path.join(os.path.dirname(__file__), "app.db")
+_initialized = False
 
 def init_db():
+    global _initialized
+    if _initialized: return
     conn = get_db_connection(); c = conn.cursor()
     if not IS_PG:
         c.execute("PRAGMA foreign_keys = ON;")
@@ -10,7 +13,10 @@ def init_db():
     c.execute("CREATE TABLE IF NOT EXISTS decisions (id TEXT PRIMARY KEY, meeting_id TEXT, summary TEXT, status TEXT, type TEXT, FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE);")
     c.execute("CREATE TABLE IF NOT EXISTS lineage (from_node_id TEXT, to_node_id TEXT, relation_type TEXT, rationale TEXT, PRIMARY KEY (from_node_id, to_node_id));")
     c.execute("CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, username TEXT, department TEXT, action_type TEXT, details TEXT, parent_hash TEXT, current_hash TEXT);")
-    if c.execute("SELECT COUNT(*) FROM meetings").fetchone()[0]: return
+    if c.execute("SELECT COUNT(*) FROM meetings").fetchone()[0]:
+        _initialized = True
+        conn.close()
+        return
     base = os.path.dirname(__file__)
     def rf(p):
         with open(os.path.join(base, p), encoding="utf-8") as f:
@@ -72,5 +78,6 @@ def init_db():
     ]
     c.executemany("INSERT INTO lineage VALUES (?,?,?,?);", ed)
     conn.commit(); conn.close()
+    _initialized = True
 
 if __name__ == "__main__": init_db()
