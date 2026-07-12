@@ -12,6 +12,8 @@ pypdfium2
 liteparse
 rapidocr
 opencv-python-headless
+surya-ocr
+
 
 # Optional: Chandra OCR 2 GGUF support (air-gapped, Windows/Linux/macOS)
 # Install with: pip install llama-cpp-python
