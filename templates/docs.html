@@ -636,7 +636,8 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
 
     <script>
         lucide.createIcons();
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+        // Turn off startOnLoad to prevent rendering NaN on hidden tabs
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
         function showTab(tabId) {
             document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
@@ -645,11 +646,26 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
             
+            // Render Mermaid ONLY on elements inside the now-visible tab
             if (tabId === 'architecture' || tabId === 'pipelines' || tabId === 'schema') {
-                // Re-initialize mermaid elements
-                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                try {
+                    mermaid.init(undefined, document.querySelectorAll(`#${tabId} .mermaid`));
+                } catch (err) {
+                    console.error("Mermaid render error:", err);
+                }
             }
         }
+
+        // Initialize default visible tab diagrams
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                try {
+                    mermaid.init(undefined, document.querySelectorAll('#architecture .mermaid'));
+                } catch (err) {
+                    console.error("Mermaid default render error:", err);
+                }
+            }, 100);
+        });
 
         function toggleFolder(el) {
             const content = el.nextElementSibling;
