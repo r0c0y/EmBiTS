@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from database import get_db_connection, init_db
-from search import execute_trace
+from search_engine import execute_trace
 from audit_ledger import log_audit, verify_audit_ledger
 from lineage import create_edge, delete_edge, auto_edges
 from ingestion import ingest
@@ -35,7 +35,7 @@ def startup():
     init_db()
     auto_edges()
     import threading
-    from search import build_existing_hierarchical_summaries
+    from summarizer import build_existing_hierarchical_summaries
     threading.Thread(target=build_existing_hierarchical_summaries, daemon=True).start()
 
 @app.get("/", response_class=HTMLResponse)
@@ -156,10 +156,10 @@ class TranslationRequest(BaseModel):
 async def translate(req: TranslationRequest, auth=Depends(require_auth)):
     if not req.text.strip():
         return {"status": "success", "translated_text": ""}
-    if req.target_lang not in ["Hindi", "Punjabi"]:
-        raise HTTPException(400, "Unsupported target language. Supported: Hindi, Punjabi")
+    if req.target_lang not in ["Hindi"]:
+        raise HTTPException(400, "Unsupported target language. Supported: Hindi")
     
-    from search import translate_text
+    from llm_client import translate_text
     translated = translate_text(req.text, req.target_lang)
     if not translated:
          raise HTTPException(500, "Translation failed.")
@@ -237,8 +237,8 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
     log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {len(chunks)} chunks, engine={result.get('ocr_engine','native')})")
     auto_edges()
     if background_tasks:
-        from search import generate_hierarchical_tree_task
-        background_tasks.add_task(generate_hierarchical_tree_task, doc_id, project_id, result["text"], safe_title)
+        from summarizer import process_new_document_background
+        background_tasks.add_task(process_new_document_background, doc_id, project_id, result["text"], safe_title)
     return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": len(chunks)}
 
 @app.get("/api/document/{doc_id}")

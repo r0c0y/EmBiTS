@@ -42,6 +42,13 @@ def init_db():
             try: c.execute("INSERT INTO chunks VALUES (?,?,?,?)", (f"{mid}-{i}", mid, i, ch))
             except: pass
     conn.commit(); conn.close()
+    
+    from vector_store import init_vector_table, build_missing_embeddings
+    init_vector_table()
+    
+    import threading
+    threading.Thread(target=build_missing_embeddings, daemon=True).start()
+    
     _initialized = True
 
 def get_projects():
