@@ -432,71 +432,84 @@ hosted/models/ocr/dict.txt</pre>
                     <p>Where <code>Rank(d)</code> is the 1-based position of chunk <code>d</code> in the respective results list (defaulting to infinity if the chunk is not present in that list). A constant factor of <code>60</code> is used to mitigate the influence of outlier high ranks. The final RRF scores are normalized to a 0.0 - 0.99 range to display as relevance confidence levels in the browser.</p>
                 </div>
             </div>
-        </section>
-
-        <!-- DATABASE SCHEMA TAB -->
+        </section>        <!-- DATABASE SCHEMA TAB -->
         <section id="schema" class="doc-section">
             <h1>Database Schema</h1>
-            <p>SQLite schema structure representing tables used for persistent document storage, vector indices, spec conflicts, and compliance audit logs.</p>
+            <p>SQLite schema structure representing tables used for persistent document storage, PageIndex vector indexes, chronological lineage tracking, and compliance audit logs.</p>
 
             <div class="card">
                 <h2>Entity Relationship Diagram (ERD)</h2>
                 <div class="mermaid">
                 erDiagram
-                    users ||--o{ audit_logs : logs
-                    projects ||--o{ meetings : has
+                    users ||--o{ audit_logs : generates
                     meetings ||--o{ chunks : splits
-                    chunks ||--o| chunk_embeddings : embeds
-                    meetings ||--o{ spec_conflicts : reports
+                    meetings ||--o{ decisions : contains
+                    meetings ||--o{ lineage : links
+                    meetings ||--o{ hierarchical_summaries : summarizes
                     
                     users {
                         string email PK
                         string name
-                        string password
+                        string password_hash
+                        string salt
                         string role
-                    }
-                    projects {
-                        string id PK
-                        string name
-                        datetime created_at
                     }
                     meetings {
                         string id PK
                         string title
-                        string filename
+                        string date
+                        string lot_id
+                        string project_id
                         string file_path
-                        string project_id FK
-                        string department
-                        string doc_date
-                        string ocr_content
-                        string status
-                        datetime created_at
+                        integer file_size_bytes
+                        string transcript_text
+                        string source_type
+                        string content_hash
+                        string created_at
+                        string ocr_quality
+                        integer corrections_count
+                        string ocr_json
+                        string ocr_markdown
+                        string ocr_engine
+                        integer page_count
+                        string uploaded_by
                     }
                     chunks {
-                        integer id PK
+                        string id PK
                         string meeting_id FK
-                        string content
                         integer chunk_index
-                        datetime created_at
+                        string chunk_text
+                        integer page_number
                     }
-                    chunk_embeddings {
-                        integer chunk_id PK
-                        blob vector
-                    }
-                    spec_conflicts {
-                        integer id PK
+                    decisions {
+                        string id PK
                         string meeting_id FK
-                        string title
-                        string severity
-                        string details
-                        datetime created_at
+                        string summary
+                        string status
+                        string type
+                    }
+                    lineage {
+                        string from_node_id PK
+                        string to_node_id PK
+                        string relation_type
+                        string rationale
+                    }
+                    hierarchical_summaries {
+                        string id PK
+                        string project_id
+                        integer level
+                        string summary_text
+                        string source_ids
                     }
                     audit_logs {
                         integer id PK
-                        datetime timestamp
-                        string user_email
-                        string action
+                        string timestamp
+                        string username
+                        string department
+                        string action_type
                         string details
+                        string parent_hash
+                        string current_hash
                     }
                 </div>
             </div>
@@ -515,45 +528,45 @@ hosted/models/ocr/dict.txt</pre>
                     <tbody>
                         <tr>
                             <td><b>users</b></td>
-                            <td>email, name, password, role</td>
-                            <td>TEXT (PK), TEXT, TEXT, TEXT</td>
+                            <td>email, name, password_hash, salt, role</td>
+                            <td>TEXT (PK), TEXT, TEXT, TEXT, TEXT</td>
                             <td>Authorized application users and access levels (admin/user).</td>
                         </tr>
                         <tr>
-                            <td><b>projects</b></td>
-                            <td>id, name, created_at</td>
-                            <td>TEXT (PK), TEXT, DATETIME</td>
-                            <td>Project groupings for documents and QA contexts.</td>
-                        </tr>
-                        <tr>
                             <td><b>meetings</b></td>
-                            <td>id, title, filename, file_path, file_size, project_id, department, doc_date, ocr_content, status, created_at</td>
-                            <td>TEXT (PK), TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, DATETIME</td>
-                            <td>Ingested source documents (PDFs, DOCX, Images) and extracted metadata.</td>
+                            <td>id, title, date, lot_id, project_id, file_path, file_size_bytes, transcript_text, source_type, content_hash, created_at, ocr_quality, corrections_count, ocr_json, ocr_markdown, ocr_engine, page_count, uploaded_by</td>
+                            <td>TEXT (PK), TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, INTEGER, TEXT</td>
+                            <td>Ingested source documents (PDFs, DOCX, XLSX, Images), structural page counts, and full OCR transcripts.</td>
                         </tr>
                         <tr>
                             <td><b>chunks</b></td>
-                            <td>id, meeting_id, content, chunk_index, created_at</td>
-                            <td>INTEGER (PK), TEXT (FK), TEXT, INTEGER, DATETIME</td>
-                            <td>Extracted document passages used for RAG search.</td>
+                            <td>id, meeting_id, chunk_index, chunk_text, page_number</td>
+                            <td>TEXT (PK), TEXT (FK), INTEGER, TEXT, INTEGER</td>
+                            <td>PageIndex page-aware text passages mapped with their physical page boundaries.</td>
                         </tr>
                         <tr>
-                            <td><b>chunk_embeddings</b></td>
-                            <td>chunk_id, vector</td>
-                            <td>INTEGER (PK), BLOB</td>
-                            <td>Serialized 768-dimension float32 embeddings for vector similarity search.</td>
+                            <td><b>decisions</b></td>
+                            <td>id, meeting_id, summary, status, type</td>
+                            <td>TEXT (PK), TEXT (FK), TEXT, TEXT, TEXT</td>
+                            <td>Structured parameters and critical specifications extracted from document transcripts.</td>
                         </tr>
                         <tr>
-                            <td><b>spec_conflicts</b></td>
-                            <td>id, meeting_id, title, severity, details, created_at</td>
-                            <td>INTEGER (PK), TEXT (FK), TEXT, TEXT, TEXT, DATETIME</td>
-                            <td>Isolated version mismatches and conflicts identified during document ingestion.</td>
+                            <td><b>lineage</b></td>
+                            <td>from_node_id, to_node_id, relation_type, rationale</td>
+                            <td>TEXT (PK), TEXT (PK), TEXT, TEXT</td>
+                            <td>Causal lineage connections and justifications between documents, forming the Cytoscape process visualizer.</td>
+                        </tr>
+                        <tr>
+                            <td><b>hierarchical_summaries</b></td>
+                            <td>id, project_id, level, summary_text, source_ids</td>
+                            <td>TEXT (PK), TEXT, INTEGER, TEXT, TEXT</td>
+                            <td>Multi-level hierarchical summaries of projects and lots for RAG reference.</td>
                         </tr>
                         <tr>
                             <td><b>audit_logs</b></td>
-                            <td>id, timestamp, user_email, action, details</td>
-                            <td>INTEGER (PK), DATETIME, TEXT, TEXT, TEXT</td>
-                            <td>Tamper-evident logs of user activities for compliance audits.</td>
+                            <td>id, timestamp, username, department, action_type, details, parent_hash, current_hash</td>
+                            <td>INTEGER (PK), TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT</td>
+                            <td>Cryptographic, tamper-evident audit logs representing chronological system modifications.</td>
                         </tr>
                     </tbody>
                 </table>
