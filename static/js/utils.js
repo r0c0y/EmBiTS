@@ -122,8 +122,99 @@ const renderViewerContent = () => {
         
         contentContainer.innerHTML = `
             <div style="display: flex; flex-direction: column; overflow: hidden; height: 100%; width: 100%; box-sizing: border-box;">
-                <div class="ai-text" style="flex: 1; background:var(--bg); border:1px solid var(--border); padding:20px; border-radius:6px; overflow-y:auto; margin:0; box-sizing: border-box; font-family:'Outfit', sans-serif; font-size:14px; line-height:1.6; color:var(--text);">
-                    ${highlightKW(parseMD(currentText), window._currentDocSearchText || "")}
+                <div style="flex: 1; overflow-y: auto; padding: 20px; box-sizing: border-box; background: #0c101d;">
+                    <!-- A4 Premium Paper Layout Container -->
+                    <div class="ocr-paper-page" style="
+                        background: #ffffff;
+                        color: #1f2937;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 8px;
+                        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+                        max-width: 800px;
+                        margin: 10px auto;
+                        padding: 40px 50px;
+                        box-sizing: border-box;
+                        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        font-size: 15px;
+                        line-height: 1.7;
+                        text-align: left;
+                    ">
+                        <!-- Custom CSS overrides specifically for paper layout content -->
+                        <style>
+                            .ocr-paper-page h1, .ocr-paper-page h2, .ocr-paper-page h3, .ocr-paper-page h4 {
+                                color: #111827 !important;
+                                font-weight: 700;
+                                margin-top: 24px;
+                                margin-bottom: 12px;
+                                border-bottom: 1px solid #e5e7eb;
+                                padding-bottom: 6px;
+                            }
+                            .ocr-paper-page h1 { font-size: 24px; }
+                            .ocr-paper-page h2 { font-size: 20px; }
+                            .ocr-paper-page h3 { font-size: 16px; }
+                            .ocr-paper-page p {
+                                margin-bottom: 16px;
+                                color: #374151 !important;
+                            }
+                            .ocr-paper-page ul, .ocr-paper-page ol {
+                                margin-bottom: 16px;
+                                padding-left: 24px;
+                                color: #374151 !important;
+                            }
+                            .ocr-paper-page li {
+                                margin-bottom: 6px;
+                            }
+                            .ocr-paper-page table {
+                                width: 100% !important;
+                                border-collapse: collapse !important;
+                                margin: 20px 0 !important;
+                                font-size: 13px !important;
+                                background: #f9fafb !important;
+                                border: 1px solid #d1d5db !important;
+                            }
+                            .ocr-paper-page th, .ocr-paper-page td {
+                                padding: 10px 14px !important;
+                                border: 1px solid #d1d5db !important;
+                                color: #1f2937 !important;
+                            }
+                            .ocr-paper-page th {
+                                background: #f3f4f6 !important;
+                                font-weight: 600 !important;
+                                color: #111827 !important;
+                            }
+                            .ocr-paper-page pre {
+                                background: #f3f4f6 !important;
+                                border: 1px solid #e5e7eb !important;
+                                padding: 14px !important;
+                                border-radius: 6px !important;
+                                overflow-x: auto !important;
+                                color: #1f2937 !important;
+                            }
+                            .ocr-paper-page code {
+                                font-family: monospace !important;
+                                font-size: 13px !important;
+                                color: #d97706 !important;
+                                background: #f3f4f6 !important;
+                                padding: 2px 4px !important;
+                                border-radius: 4px !important;
+                            }
+                            .ocr-paper-page blockquote {
+                                border-left: 4px solid #3b82f6 !important;
+                                padding-left: 16px !important;
+                                margin: 16px 0 !important;
+                                color: #4b5563 !important;
+                                font-style: italic !important;
+                            }
+                            /* Keep highlighted keyword readable on white paper */
+                            .ocr-paper-page .match {
+                                background: #fef08a !important;
+                                color: #000000 !important;
+                                border-radius: 2px !important;
+                                padding: 0 2px !important;
+                            }
+                        </style>
+                        ${highlightKW(parseMD(currentText), window._currentDocSearchText || "")}
+                    </div>
                 </div>
                 ${paginatorHTML}
             </div>
