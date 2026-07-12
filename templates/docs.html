@@ -366,6 +366,37 @@
                         </tr>
                     </tbody>
                 </table>
+            <div class="card">
+                <h2>Hybrid Retrieval & RRF Sequence</h2>
+                <p>The search engine uses a parallel hybrid retrieval strategy combining sparse (BM25) and dense semantic matches, resolved via Reciprocal Rank Fusion (RRF):</p>
+                
+                <div class="mermaid">
+                sequenceDiagram
+                    autonumber
+                    User->>Search Engine: Input Search Query ("Why did Lot 2 yield drop?")
+                    par Parallel Path 1: Classical Search
+                        Search Engine->>SQLite FTS5: Match query tokens (BM25 ranker)
+                        SQLite FTS5-->>Search Engine: Return Ranked Keyword Chunks
+                    and Parallel Path 2: Semantic Search
+                        Search Engine->>Ollama (Embeddings): Request Query Vector (embeddinggemma)
+                        Ollama (Embeddings)-->>Search Engine: Return 768-dim Query Vector
+                        Search Engine->>SQLite Database: Load Packed float32 BLOB vectors
+                        Search Engine->>Vector Store: Compute Cosine Similarity (NumPy)
+                        Vector Store-->>Search Engine: Return Ranked Semantic Chunks
+                    end
+                    Search Engine->>RRF Merger: Merge Rank lists A & B using RRF Formula
+                    RRF Merger-->>Search Engine: Select Top Chunks (Normalized confidence 0.0 - 0.99)
+                    Search Engine->>Ollama (LLM): Call /api/chat with Chunks + Query (gemma3:1b)
+                    Ollama (LLM)-->>Search Engine: Generate QA Response (concise/elaborate XML tags)
+                    Search Engine-->>User: Display AI Answer & Cytoscape Traceability Nodes
+                </div>
+
+                <div style="margin-top: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    <h3 style="color: var(--text); font-size: 14px; margin-bottom: 6px;">Mathematical Fusion (Reciprocal Rank Fusion):</h3>
+                    <p>Both retrieval systems output an ordered list of matched chunks. To merge them fairly without scale mismatch, we use the Reciprocal Rank Fusion score for each document chunk <code>d</code>:</p>
+                    <pre style="margin: 8px 0; background: #030712; padding: 12px; border-radius: 6px; border: 1px solid var(--border);"><code style="color: var(--primary);">Score(d) = 1 / (60 + Rank_Keyword(d)) + 1 / (60 + Rank_Vector(d))</code></pre>
+                    <p>Where <code>Rank(d)</code> is the 1-based position of chunk <code>d</code> in the respective results list (defaulting to infinity if the chunk is not present in that list). A constant factor of <code>60</code> is used to mitigate the influence of outlier high ranks. The final RRF scores are normalized to a 0.0 - 0.99 range to display as relevance confidence levels in the browser.</p>
+                </div>
             </div>
         </section>
 
