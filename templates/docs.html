@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScribeLink | System Architecture & Docs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #090d16;
+            --surface: #111827;
+            --border: #1f2937;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #38bdf8;
+            --primary-hover: #7dd3fc;
+            --card-bg: rgba(17, 24, 39, 0.7);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        aside {
+            width: 280px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--primary);
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .nav-link {
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--primary);
+        }
+        main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .doc-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+        .doc-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        h2 { font-size: 22px; font-weight: 600; margin: 24px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--primary); }
+        h3 { font-size: 16px; font-weight: 600; margin: 16px 0 8px; }
+        p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(12px);
+        }
+        pre {
+            background: #030712;
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        code { font-family: monospace; font-size: 13px; color: #f472b6; }
+        .mermaid {
+            background: #111827;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 13px;
+        }
+        th { font-weight: 600; color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+        .back-btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+        .back-btn:hover { background: var(--primary-hover); }
+    </style>
+</head>
+<body>
+    <aside>
+        <div class="brand">
+            <i data-lucide="book-open"></i>
+            <span>ScribeLink Docs</span>
+        </div>
+        <nav>
+            <div class="nav-link active" onclick="showTab('architecture')"><i data-lucide="network"></i> System Overview</div>
+            <div class="nav-link" onclick="showTab('pipelines')"><i data-lucide="cpu"></i> Data Pipelines</div>
+            <div class="nav-link" onclick="showTab('schema')"><i data-lucide="database"></i> Database Schema</div>
+            <div class="nav-link" onclick="showTab('customization')"><i data-lucide="settings"></i> Configurations</div>
+        </nav>
+        <a href="/" class="back-btn"><i data-lucide="arrow-left"></i> Back to Workspace</a>
+    </aside>
+
+    <main>
+        <!-- SYSTEM OVERVIEW TAB -->
+        <section id="architecture" class="doc-section active">
+            <h1>System Architecture</h1>
+            <p>High-level system topology of ScribeLink running in an air-gapped local workstation environment.</p>
+            
+            <div class="card">
+                <h2>Interactive Architecture Model</h2>
+                <div class="mermaid">
+                graph TD
+                    A[User / Upload Interface] -->|Upload Docs| B[Ingestion Engine]
+                    B -->|Extract Text| C[OCR & Parsing Pipeline]
+                    C -->|Raw Text Chunks| D[Embedder Client]
+                    D -->|Ollama /api/embeddings| E[Vector Embeddings]
+                    E -->|float32 struct pack| F[(Local SQLite Database)]
+                    F -->|RRF Combination| G[Search Engine]
+                    H[User Query] -->|Ollama vector| G
+                    G -->|context build| I[Local LLM Generation]
+                    I -->|Ollama /api/chat| J[AI Decision Summary]
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>RRF Hybrid Search Topology</h2>
+                <p>Retrieval combines classical keyword searching (FTS5) and dense vector embeddings using Reciprocal Rank Fusion (RRF).</p>
+                <div class="mermaid">
+                graph LR
+                    Query[User Query] --> Keyword[SQLite FTS5 Keyword Search]
+                    Query --> Vector[Cosine Similarity Vector Search]
+                    Keyword --> RankK[Rankings List A]
+                    Vector --> RankV[Rankings List B]
+                    RankK --> RRF[RRF Merger Engine]
+                    RankV --> RRF
+                    RRF --> TopK[Top Retained Context Chunks]
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA PIPELINES TAB -->
+        <section id="pipelines" class="doc-section">
+            <h1>Data Pipelines</h1>
+            <p>Detailed sequence and workflow models for document ingestion and search query answering.</p>
+
+            <div class="card">
+                <h2>Document Ingestion Workflow</h2>
+                <p>Documents uploaded undergo localized text extraction, image OCR, chunking, and embedding generation.</p>
+                <div class="mermaid">
+                sequenceDiagram
+                    autonumber
+                    User->>Ingestion: Upload Document File (.pdf, .docx, .png)
+                    Ingestion->>Parser: Extract Native Text Structure
+                    alt Native text exists
+                        Parser-->>Ingestion: Return Text Content
+                    else Image / Scanned Doc
+                        Parser->>OCR Engine: Extract via RapidOCR
+                        OCR Engine-->>Ingestion: Return OCR OCR text
+                    end
+                    Ingestion->>Preprocessor: Chunk text (Sliding window)
+                    Preprocessor->>Embedder: Calculate embedding vector (embeddinggemma)
+                    Embedder-->>Ingestion: Return 768-dim float array
+                    Ingestion->>SQLite: Insert Chunk, metadata, and packed BLOB vector
+                </div>
+            </div>
+        </section>
+
+        <!-- DATABASE SCHEMA TAB -->
+        <section id="schema" class="doc-section">
+            <h1>Database Schema</h1>
+            <p>SQLite schema structure representing tables used for persistent document storage, vector indices, spec conflicts, and compliance audit logs.</p>
+
+            <div class="card">
+                <h2>Entity Relationship Diagram (ERD)</h2>
+                <div class="mermaid">
+                erDiagram
+                    PROJECTS ||--o{ DOCUMENTS : contains
+                    DOCUMENTS ||--o{ DOCUMENT_CHUNKS : splits_into
+                    DOCUMENT_CHUNKS ||--o| CHUNK_EMBEDDINGS : has_vector
+                    SPEC_CONFLICTS }|--|| DOCUMENTS : reports
+                    AUDIT_TRAIL ||--o| USERS : logged_for
+                    
+                    PROJECTS {
+                        string id PK
+                        string name
+                        datetime created_at
+                    }
+                    DOCUMENTS {
+                        string id PK
+                        string title
+                        string filename
+                        string project_id FK
+                    }
+                    DOCUMENT_CHUNKS {
+                        integer id PK
+                        string document_id FK
+                        string content
+                        integer chunk_index
+                    }
+                    CHUNK_EMBEDDINGS {
+                        integer chunk_id PK
+                        blob vector
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Table Definitions</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Table Name</th>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>projects</b></td>
+                            <td>id, name, created_at</td>
+                            <td>TEXT, TEXT, DATETIME</td>
+                            <td>List of projects.</td>
+                        </tr>
+                        <tr>
+                            <td><b>documents</b></td>
+                            <td>id, title, filename, file_path, file_size, project_id, department, doc_date, ocr_content, status, created_at</td>
+                            <td>TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, DATETIME</td>
+                            <td>Document records and native metadata.</td>
+                        </tr>
+                        <tr>
+                            <td><b>document_chunks</b></td>
+                            <td>id, document_id, content, chunk_index, created_at</td>
+                            <td>INTEGER, TEXT, TEXT, INTEGER, DATETIME</td>
+                            <td>Text fragments generated during processing.</td>
+                        </tr>
+                        <tr>
+                            <td><b>chunk_embeddings</b></td>
+                            <td>chunk_id, vector</td>
+                            <td>INTEGER, BLOB</td>
+                            <td>Packed float32 vector embedding records (768 dimensions).</td>
+                        </tr>
+                        <tr>
+                            <td><b>audit_trail</b></td>
+                            <td>id, timestamp, user_email, action, details</td>
+                            <td>INTEGER, DATETIME, TEXT, TEXT, TEXT</td>
+                            <td>Compliance ledger tracking every query and file upload action.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONFIGURATIONS TAB -->
+        <section id="customization" class="doc-section">
+            <h1>Configuration & Customization</h1>
+            <p>Guidelines to modify system components, swap databases, and adjust LLM parameters.</p>
+
+            <div class="card">
+                <h2>1. Swapping SQLite with PostgreSQL (PGVector)</h2>
+                <p>To upgrade to a production PostgreSQL database, modify <code>database.py</code> to use a PostgreSQL connection string instead of local SQLite:</p>
+                <pre><code># In database.py
+import psycopg2
+
+def get_db_connection():
+    # Replace SQLite connection with PostgreSQL
+    return psycopg2.connect("postgresql://user:password@localhost:5432/scribelink")
+</code></pre>
+                <p>To support vectors, enable the PGVector extension in PostgreSQL:</p>
+                <pre><code>CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE chunk_embeddings (
+    chunk_id INT REFERENCES document_chunks(id) ON DELETE CASCADE,
+    vector vector(768)
+);</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>2. Adjusting LLM & Embedding Models</h2>
+                <p>Modify <code>config.py</code> to target different local Ollama models (e.g., Llama 3, Qwen 2.5) or adjust API endpoints:</p>
+                <pre><code># In config.py
+OLLAMA_BASE_URL = "http://localhost:11434"
+LLM_MODEL = "gemma3:1b"           # Generation model
+EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
+</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+        function showTab(tabId) {
+            document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            // Re-render mermaid diagrams if visible
+            mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+        }
+    </script>
+</body>
+</html>

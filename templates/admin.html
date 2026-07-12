@@ -35,7 +35,10 @@
             <button class="admin-nav-btn" data-page="users"><i data-lucide="users" class="icon"></i> Users</button>
             <button class="admin-nav-btn" data-page="knowledge-map"><i data-lucide="network" class="icon"></i> Knowledge Map</button>
         </nav>
-        <div class="admin-footer"><a href="/" class="back-link">← Back to App</a></div>
+        <div class="admin-footer" style="display:flex; flex-direction:column; gap:8px;">
+            <a href="/docs/system" class="back-link" style="color:var(--primary) !important; text-decoration:none; font-weight:600;"><i data-lucide="book-open" class="icon" style="width:14px;height:14px;margin-right:4px;"></i> System Docs</a>
+            <a href="/" class="back-link">← Back to App</a>
+        </div>
     </aside>
     <main class="admin-main">
         <header class="workspace-header"><div><h1 id="admin-title">Dashboard</h1><p id="admin-subtitle" class="subtitle">System overview and management.</p></div><div class="hdr-actions"><button id="theme-btn" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button></div></header>

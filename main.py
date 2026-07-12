@@ -45,6 +45,10 @@ async def dashboard(request: Request):
     resp.headers["Pragma"] = "no-cache"
     return resp
 
+@app.get("/docs/system", response_class=HTMLResponse)
+async def system_docs(request: Request):
+    return templates.TemplateResponse(request, "docs.html")
+
 @app.get("/api/documents")
 async def get_documents(project: str = None):
     conn = get_db_connection(); c = conn.cursor()
