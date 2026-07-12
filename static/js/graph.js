@@ -28,7 +28,22 @@ function renderGraph(graph) {
             {selector:'.faded', style:{'opacity':0.15}},
             {selector:'.highlighted', style:{'border-width':3,'border-color':'#00e5ff'}}
         ],
-        layout:{name:'cose', animate:false, fit:true, padding:30},
+        layout: {
+            name: 'cose',
+            animate: false,
+            idealEdgeLength: 100,
+            nodeOverlap: 20,
+            refresh: 20,
+            fit: true,
+            padding: 30,
+            randomize: false,
+            componentSpacing: 100,
+            nodeRepulsion: 400000,
+            edgeElasticity: 100,
+            nestingFactor: 5,
+            gravity: 80,
+            numIter: 1000
+        },
         zoomingEnabled:true, userZoomingEnabled:true, panningEnabled:true, userPanningEnabled:true
     });
     cy.on('mouseover','node', function(evt) {

@@ -91,16 +91,30 @@ def execute_trace(query, project=None, doc_id=None, date_from=None, date_to=None
             seen.add(mid)
             out.append({"meeting_id": mid, "meeting_title": c["title"], "date": c["date"], "lot_id": c["lot_id"], "department": c["project_id"], "text": c["chunk_text"], "confidence": c.get("score", 0.5)})
             
-    # Consolidate top chunks for context
+    # Consolidate top chunks for context and sort chronologically
     grouped = {}
     for c in citations[:10]:
         grouped.setdefault(c["meeting_id"], []).append(c)
     
-    parts = []
-    for idx, (mid, chunks) in enumerate(grouped.items(), 1):
+    grouped_docs = []
+    for mid, chunks in grouped.items():
         chunks.sort(key=lambda x: x["chunk_index"])
-        excerpts = "\n".join([f"  * Excerpt (Chunk {ch['chunk_index']}): {ch['chunk_text']}" for ch in chunks])
-        parts.append(f"Source [{idx}] (ID: {mid}):\nDocument Title: {chunks[0]['title']}\n{excerpts}")
+        doc_date = chunks[0].get("date") or "0000-00-00"
+        grouped_docs.append({
+            "meeting_id": mid,
+            "date": doc_date,
+            "title": chunks[0]["title"],
+            "chunks": chunks
+        })
+    
+    # Sort chronologically (oldest to newest)
+    grouped_docs.sort(key=lambda x: x["date"])
+    
+    parts = []
+    for idx, doc in enumerate(grouped_docs, 1):
+        is_latest = " (LATEST REVISION / OVERRIDE SOURCE)" if idx == len(grouped_docs) else ""
+        excerpts = "\n".join([f"  * Excerpt (Chunk {ch['chunk_index']}): {ch['chunk_text']}" for ch in doc["chunks"]])
+        parts.append(f"Source [{idx}] (ID: {doc['meeting_id']}):\nDocument Title: {doc['title']}\nDocument Date: {doc['date']}{is_latest}\n{excerpts}")
     context = "\n\n".join(parts)
     
     # Check for hierarchical summaries context
@@ -111,7 +125,7 @@ def execute_trace(query, project=None, doc_id=None, date_from=None, date_to=None
     if sum_parts:
         context += "\n\n=== Hierarchical Summary Context ===\n" + "\n\n".join(sum_parts)
         
-    sys_prompt = "You are ScribeLink AI, a document analysis assistant. Analyze the excerpts and answer based ONLY on context. Cite matching sources as [1], [2] corresponding to their source number. Never use raw document IDs in your answer. You MUST format your response by wrapping your sections in XML tags like this: <concise>- bullet 1\n- bullet 2</concise> and <elaborate>detailed reasoning with headers</elaborate>. Format equations in KaTeX ($...$ or $$...$$). Tables in markdown."
+    sys_prompt = "You are ScribeLink AI, a document analysis assistant. Analyze the excerpts and answer based ONLY on context. Chunks are sorted chronologically (oldest to newest). If different sources contain contradicting decisions, tasks, or specifications for the same topic, you MUST prioritize the newer document (marked as LATEST REVISION / OVERRIDE SOURCE) and note that it overrides the older information. Cite matching sources as [1], [2] corresponding to their source number. Never use raw document IDs. You MUST format your response by wrapping your sections in XML tags like this: <concise>- bullet 1\n- bullet 2</concise> and <elaborate>detailed reasoning with headers</elaborate>. Format equations in KaTeX ($...$ or $$...$$). Tables in markdown."
     ans = query_llm(sys_prompt, build_prompt(context, query))
     
     # ponytail: post-process local LLM output to guarantee XML tags for UI compatibility
