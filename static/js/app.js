@@ -407,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const filterInput = document.getElementById("project-filter");
             const filterMenu = document.getElementById("search-proj-menu");
             if (filterInput && filterMenu) {
-                mkMultiSelect(filterInput, filterMenu, allProjObjects, "All Projects", (selectedProjIds) => {
+                mkMultiSelect(filterInput, filterMenu, dbProjects, "All Projects", (selectedProjIds) => {
                     updateDocumentFilter(selectedProjIds);
                 });
             }

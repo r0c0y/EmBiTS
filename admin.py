@@ -156,6 +156,8 @@ async def delete_project(project_id: str, auth=Depends(require_auth)):
             if os.path.exists(ocr_p):
                 try: os.unlink(ocr_p)
                 except: pass
+    # Delete chunk embeddings
+    c.execute("DELETE FROM chunk_embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE meeting_id IN (SELECT id FROM meetings WHERE project_id = ?))", (project_id,))
     # Delete meetings row. Cascading foreign keys will delete chunks and decisions!
     c.execute("DELETE FROM meetings WHERE project_id = ?", (project_id,))
     conn.commit(); conn.close()
@@ -186,6 +188,8 @@ async def delete_document(doc_id: str, auth=Depends(require_auth)):
             try: os.unlink(ocr_p)
             except: pass
             
+    # Delete chunk embeddings
+    c.execute("DELETE FROM chunk_embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE meeting_id = ?)", (doc_id,))
     # Delete meetings row. Cascading foreign keys will delete chunks and decisions!
     c.execute("DELETE FROM meetings WHERE id = ?", (doc_id,))
     conn.commit(); conn.close()
