@@ -341,12 +341,18 @@
                 <h2>Document Parsers & Ingestion Engine</h2>
                 <p>The ingestion pipeline handles multiple formats natively on the local filesystem before splitting content into chunks:</p>
                 <ul>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PDF Documents:</b> Parsed using <code>pdfplumber</code> to extract text and tables page-by-page. If the pages are scanned (no text layer), the page image is dynamically rendered using <code>pypdfium2</code> and sent to the OCR pipeline.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PDF Documents:</b> Parsed using <code>pdfplumber</code> and <b>LiteParse</b> to extract text and tables page-by-page. If the pages are scanned (no text layer) or have sparse text, the page image is dynamically rendered using <code>pypdfium2</code> and sent to the OCR pipeline.</li>
                     <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Word Files (.docx):</b> Processed using <code>python-docx</code> to read paragraphs, headers, and bullet structures.</li>
                     <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Excel Sheets (.xlsx):</b> Loaded via <code>openpyxl</code>, converting active sheets to clean structured plain-text rows for indexing.</li>
                     <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PowerPoint Slides (.pptx):</b> Parsed with <code>python-pptx</code>, extracting text from shapes, slides, and notes.</li>
                     <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Images (.png, .jpg):</b> Loaded via <code>pillow</code> and processed through the <b>RapidOCR ONNX Engine</b> to pull OCR text.</li>
                 </ul>
+                <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    <h3 style="color: var(--text); font-size: 14px; margin-top: 0; margin-bottom: 6px;">Offline LiteParse Tesseract Configuration:</h3>
+                    <p>For fully air-gapped/offline installations utilizing LiteParse's built-in Tesseract engine, download the language files (e.g. <code>eng.traineddata</code>) and configure the environment variable:</p>
+                    <pre style="margin: 8px 0; background: #030712; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; color: var(--primary);">export TESSDATA_PREFIX=/path/to/tessdata_directory</pre>
+                    <p style="margin-top: 8px; margin-bottom: 0;"><b>Coordinate Space Conversion:</b> Bounding boxes are extracted in standard PDF points (1/72 inch). To display highlights on a rendered page image at 150 DPI, the system maps coordinates using a scaling multiplier: <code>Scale = DPI / 72 = 150 / 72 ≈ 2.083</code>.</p>
+                </div>
             </div>
 
             <div class="card">
