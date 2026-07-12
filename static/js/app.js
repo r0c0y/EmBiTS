@@ -25,12 +25,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 if (user.role === 'admin') {
                     document.getElementById("admin-panel-link").style.display = "flex";
+                    const docLink = document.getElementById("docs-panel-link");
+                    if (docLink) docLink.style.display = "flex";
                     document.getElementById("nav-registry-btn").style.display = "flex";
                     document.getElementById("nav-audits-btn").style.display = "flex";
                     const regActivity = document.getElementById("reg-activity");
                     if (regActivity) regActivity.style.display = "block";
                 } else {
                     document.getElementById("admin-panel-link").style.display = "none";
+                    const docLink = document.getElementById("docs-panel-link");
+                    if (docLink) docLink.style.display = "none";
                     document.getElementById("nav-registry-btn").style.display = "flex";
                     document.getElementById("nav-audits-btn").style.display = "none";
                     const regActivity = document.getElementById("reg-activity");

@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScribeLink | System Architecture & Docs</title>
+    <script>
+        try {
+            const auth = JSON.parse(localStorage.getItem("scl_auth"));
+            if (!auth || auth.role !== "admin") {
+                window.location.href = "/";
+            }
+        } catch(e) {
+            window.location.href = "/";
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
@@ -226,6 +236,47 @@
                     Ingestion->>SQLite: Insert Chunk, metadata, and packed BLOB vector
                 </div>
             </div>
+
+            <div class="card">
+                <h2>Document Parsers & Ingestion Engine</h2>
+                <p>The ingestion pipeline handles multiple formats natively on the local filesystem before splitting content into chunks:</p>
+                <ul>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PDF Documents:</b> Parsed using <code>pdfplumber</code> to extract text and tables page-by-page. If the pages are scanned (no text layer), the page image is dynamically rendered using <code>pypdfium2</code> and sent to the OCR pipeline.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Word Files (.docx):</b> Processed using <code>python-docx</code> to read paragraphs, headers, and bullet structures.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Excel Sheets (.xlsx):</b> Loaded via <code>openpyxl</code>, converting active sheets to clean structured plain-text rows for indexing.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PowerPoint Slides (.pptx):</b> Parsed with <code>python-pptx</code>, extracting text from shapes, slides, and notes.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Images (.png, .jpg):</b> Loaded via <code>pillow</code> and processed through the <b>RapidOCR ONNX Engine</b> to pull OCR text.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Local AI Models Configuration</h2>
+                <p>All model inferences are executed locally via the Ollama server: </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model Purpose</th>
+                            <th>Active Model</th>
+                            <th>Dimensions / Specs</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Text Vector Embeddings</b></td>
+                            <td><code>embeddinggemma:latest</code></td>
+                            <td>768 dimensions</td>
+                            <td>Calculates mathematical dense vector representations of parsed text chunks for semantic cosine-similarity search.</td>
+                        </tr>
+                        <tr>
+                            <td><b>Text Generation & QA</b></td>
+                            <td><code>gemma3:1b</code></td>
+                            <td>1.2B Parameters</td>
+                            <td>Performs reading comprehension and Hindi/English QA answering using retrieved context. Optimized for fast local execution on client CPUs.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- DATABASE SCHEMA TAB -->
@@ -237,32 +288,60 @@
                 <h2>Entity Relationship Diagram (ERD)</h2>
                 <div class="mermaid">
                 erDiagram
-                    PROJECTS ||--o{ DOCUMENTS : contains
-                    DOCUMENTS ||--o{ DOCUMENT_CHUNKS : splits_into
-                    DOCUMENT_CHUNKS ||--o| CHUNK_EMBEDDINGS : has_vector
-                    SPEC_CONFLICTS }|--|| DOCUMENTS : reports
-                    AUDIT_TRAIL ||--o| USERS : logged_for
+                    users ||--o{ audit_logs : logs
+                    projects ||--o{ meetings : has
+                    meetings ||--o{ chunks : splits
+                    chunks ||--o| chunk_embeddings : embeds
+                    meetings ||--o{ spec_conflicts : reports
                     
-                    PROJECTS {
+                    users {
+                        string email PK
+                        string name
+                        string password
+                        string role
+                    }
+                    projects {
                         string id PK
                         string name
                         datetime created_at
                     }
-                    DOCUMENTS {
+                    meetings {
                         string id PK
                         string title
                         string filename
+                        string file_path
                         string project_id FK
+                        string department
+                        string doc_date
+                        string ocr_content
+                        string status
+                        datetime created_at
                     }
-                    DOCUMENT_CHUNKS {
+                    chunks {
                         integer id PK
-                        string document_id FK
+                        string meeting_id FK
                         string content
                         integer chunk_index
+                        datetime created_at
                     }
-                    CHUNK_EMBEDDINGS {
+                    chunk_embeddings {
                         integer chunk_id PK
                         blob vector
+                    }
+                    spec_conflicts {
+                        integer id PK
+                        string meeting_id FK
+                        string title
+                        string severity
+                        string details
+                        datetime created_at
+                    }
+                    audit_logs {
+                        integer id PK
+                        datetime timestamp
+                        string user_email
+                        string action
+                        string details
                     }
                 </div>
             </div>
@@ -280,34 +359,46 @@
                     </thead>
                     <tbody>
                         <tr>
+                            <td><b>users</b></td>
+                            <td>email, name, password, role</td>
+                            <td>TEXT (PK), TEXT, TEXT, TEXT</td>
+                            <td>Authorized application users and access levels (admin/user).</td>
+                        </tr>
+                        <tr>
                             <td><b>projects</b></td>
                             <td>id, name, created_at</td>
-                            <td>TEXT, TEXT, DATETIME</td>
-                            <td>List of projects.</td>
+                            <td>TEXT (PK), TEXT, DATETIME</td>
+                            <td>Project groupings for documents and QA contexts.</td>
                         </tr>
                         <tr>
-                            <td><b>documents</b></td>
+                            <td><b>meetings</b></td>
                             <td>id, title, filename, file_path, file_size, project_id, department, doc_date, ocr_content, status, created_at</td>
-                            <td>TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, DATETIME</td>
-                            <td>Document records and native metadata.</td>
+                            <td>TEXT (PK), TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, DATETIME</td>
+                            <td>Ingested source documents (PDFs, DOCX, Images) and extracted metadata.</td>
                         </tr>
                         <tr>
-                            <td><b>document_chunks</b></td>
-                            <td>id, document_id, content, chunk_index, created_at</td>
-                            <td>INTEGER, TEXT, TEXT, INTEGER, DATETIME</td>
-                            <td>Text fragments generated during processing.</td>
+                            <td><b>chunks</b></td>
+                            <td>id, meeting_id, content, chunk_index, created_at</td>
+                            <td>INTEGER (PK), TEXT (FK), TEXT, INTEGER, DATETIME</td>
+                            <td>Extracted document passages used for RAG search.</td>
                         </tr>
                         <tr>
                             <td><b>chunk_embeddings</b></td>
                             <td>chunk_id, vector</td>
-                            <td>INTEGER, BLOB</td>
-                            <td>Packed float32 vector embedding records (768 dimensions).</td>
+                            <td>INTEGER (PK), BLOB</td>
+                            <td>Serialized 768-dimension float32 embeddings for vector similarity search.</td>
                         </tr>
                         <tr>
-                            <td><b>audit_trail</b></td>
+                            <td><b>spec_conflicts</b></td>
+                            <td>id, meeting_id, title, severity, details, created_at</td>
+                            <td>INTEGER (PK), TEXT (FK), TEXT, TEXT, TEXT, DATETIME</td>
+                            <td>Isolated version mismatches and conflicts identified during document ingestion.</td>
+                        </tr>
+                        <tr>
+                            <td><b>audit_logs</b></td>
                             <td>id, timestamp, user_email, action, details</td>
-                            <td>INTEGER, DATETIME, TEXT, TEXT, TEXT</td>
-                            <td>Compliance ledger tracking every query and file upload action.</td>
+                            <td>INTEGER (PK), DATETIME, TEXT, TEXT, TEXT</td>
+                            <td>Tamper-evident logs of user activities for compliance audits.</td>
                         </tr>
                     </tbody>
                 </table>
