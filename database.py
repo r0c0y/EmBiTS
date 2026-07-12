@@ -10,7 +10,7 @@ def init_db():
     if not IS_PG: c.execute("PRAGMA foreign_keys = ON;")
     tables = [
         "CREATE TABLE IF NOT EXISTS meetings (id TEXT PRIMARY KEY, title TEXT, date TEXT, lot_id TEXT, project_id TEXT DEFAULT 'Unknown', file_path TEXT, file_size_bytes INTEGER DEFAULT 0, transcript_text TEXT, source_type TEXT, content_hash TEXT, created_at TEXT, ocr_quality TEXT DEFAULT 'auto', corrections_count INTEGER DEFAULT 0, ocr_json TEXT, ocr_markdown TEXT, ocr_engine TEXT, page_count INTEGER DEFAULT 0, uploaded_by TEXT DEFAULT 'Anonymous')",
-        "CREATE TABLE IF NOT EXISTS chunks (id TEXT PRIMARY KEY, meeting_id TEXT, chunk_index INTEGER, chunk_text TEXT, FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE)",
+        "CREATE TABLE IF NOT EXISTS chunks (id TEXT PRIMARY KEY, meeting_id TEXT, chunk_index INTEGER, chunk_text TEXT, page_number INTEGER DEFAULT 1, FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE)",
         "CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(chunk_text, content='chunks', content_rowid='rowid', tokenize='porter unicode61')",
         "CREATE TABLE IF NOT EXISTS decisions (id TEXT PRIMARY KEY, meeting_id TEXT, summary TEXT, status TEXT, type TEXT, FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE)",
         "CREATE TABLE IF NOT EXISTS lineage (from_node_id TEXT, to_node_id TEXT, relation_type TEXT, rationale TEXT, PRIMARY KEY (from_node_id, to_node_id))",
@@ -31,6 +31,11 @@ def init_db():
     for col in ["project_id TEXT DEFAULT 'Unknown'", "source_type TEXT", "content_hash TEXT", "created_at TEXT", "file_size_bytes INTEGER DEFAULT 0", "ocr_quality TEXT DEFAULT 'auto'", "corrections_count INTEGER DEFAULT 0", "ocr_json TEXT", "ocr_markdown TEXT", "ocr_engine TEXT", "page_count INTEGER DEFAULT 0", "uploaded_by TEXT DEFAULT 'Anonymous'"]:
         try: c.execute(f"ALTER TABLE meetings ADD COLUMN {col};")
         except: pass
+    
+    # Try adding page_number to chunks table if it is an existing schema
+    try: c.execute("ALTER TABLE chunks ADD COLUMN page_number INTEGER DEFAULT 1;")
+    except: pass
+
     from seed_data import seed
     seed(c)
     conn.commit()
@@ -39,7 +44,7 @@ def init_db():
     from ingestion import chunk_text
     for mid, text in rows:
         for i, ch in enumerate(chunk_text(text)):
-            try: c.execute("INSERT INTO chunks VALUES (?,?,?,?)", (f"{mid}-{i}", mid, i, ch))
+            try: c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)", (f"{mid}-{i}", mid, i, ch, 1))
             except: pass
     conn.commit(); conn.close()
     

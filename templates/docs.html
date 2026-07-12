@@ -328,6 +328,16 @@
             </div>
 
             <div class="card">
+                <h2>PageIndex Page-Aware Chunking & Document Navigation</h2>
+                <p>To eliminate arbitrary text divisions across pages, ScribeLink integrates page-aware structural indexing inspired by the PageIndex and Haystack architectures:</p>
+                <ul>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Page-Bound Ingestion:</b> During document ingestion, the file parser splits content page-by-page. For multi-page PDFs or OCR-scanned images, text is chunked within its respective page boundaries, and stored in the SQLite database with its explicit 1-indexed <code>page_number</code>.</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Page-Aware RAG Citations:</b> The search retrieval pipeline queries the <code>page_number</code> value along with raw text. This page number is injected directly into the LLM context prompt (e.g. <code>* Excerpt (Chunk 4, Page 3): ...</code>).</li>
+                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Explainable Provenance:</b> The LLM is instructed to cite findings with precise page references (e.g., <code>[1, Page 3]</code>) instead of generic file tags. The citation lists in the UI render the exact page indicators for immediate verification by engineers.</li>
+                </ul>
+            </div>
+
+            <div class="card">
                 <h2>Document Parsers & Ingestion Engine</h2>
                 <p>The ingestion pipeline handles multiple formats natively on the local filesystem before splitting content into chunks:</p>
                 <ul>

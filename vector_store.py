@@ -46,7 +46,7 @@ def vector_search(query_vec: list, project_id: str = None, doc_id: str = None, t
     conn = get_db_connection(); c = conn.cursor()
     
     # 1. Retrieve all candidate chunks with their text and metadata
-    sql = "SELECT c.id, c.meeting_id, c.chunk_index, c.chunk_text, m.title, m.date, m.lot_id, m.project_id FROM chunks c JOIN meetings m ON c.meeting_id = m.id"
+    sql = "SELECT c.id, c.meeting_id, c.chunk_index, c.chunk_text, c.page_number, m.title, m.date, m.lot_id, m.project_id FROM chunks c JOIN meetings m ON c.meeting_id = m.id"
     params = []
     where = []
     if project_id:

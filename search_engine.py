@@ -17,7 +17,7 @@ def keyword_search(query, project=None, doc_id=None, top_k=30):
     if not tokens: return []
     conn = get_db_connection(); c = conn.cursor()
     fts_q = " OR ".join(tokens)
-    sql = "SELECT c.id, c.meeting_id, c.chunk_index, c.chunk_text, m.title, m.date, m.lot_id, m.project_id, bm25(chunks_fts) as score FROM chunks_fts JOIN chunks c ON chunks_fts.rowid = c.rowid JOIN meetings m ON m.id = c.meeting_id"
+    sql = "SELECT c.id, c.meeting_id, c.chunk_index, c.chunk_text, c.page_number, m.title, m.date, m.lot_id, m.project_id, bm25(chunks_fts) as score FROM chunks_fts JOIN chunks c ON chunks_fts.rowid = c.rowid JOIN meetings m ON m.id = c.meeting_id"
     params, where = [fts_q], ["chunks_fts MATCH ?"]
     if project:
         proj_list = [p.strip() for p in project.split(",") if p.strip()]
@@ -89,7 +89,16 @@ def execute_trace(query, project=None, doc_id=None, date_from=None, date_to=None
         mid = c["meeting_id"]
         if mid not in seen:
             seen.add(mid)
-            out.append({"meeting_id": mid, "meeting_title": c["title"], "date": c["date"], "lot_id": c["lot_id"], "department": c["project_id"], "text": c["chunk_text"], "confidence": c.get("score", 0.5)})
+            out.append({
+                "meeting_id": mid,
+                "meeting_title": c["title"],
+                "date": c["date"],
+                "lot_id": c["lot_id"],
+                "department": c["project_id"],
+                "text": c["chunk_text"],
+                "page_number": c.get("page_number") or 1,
+                "confidence": c.get("score", 0.5)
+            })
             
     # Consolidate top chunks for context and sort chronologically
     grouped = {}
@@ -113,7 +122,7 @@ def execute_trace(query, project=None, doc_id=None, date_from=None, date_to=None
     parts = []
     for idx, doc in enumerate(grouped_docs, 1):
         is_latest = " (LATEST REVISION / OVERRIDE SOURCE)" if idx == len(grouped_docs) else ""
-        excerpts = "\n".join([f"  * Excerpt (Chunk {ch['chunk_index']}): {ch['chunk_text']}" for ch in doc["chunks"]])
+        excerpts = "\n".join([f"  * Excerpt (Chunk {ch['chunk_index']}, Page {ch.get('page_number') or 1}): {ch['chunk_text']}" for ch in doc["chunks"]])
         parts.append(f"Source [{idx}] (ID: {doc['meeting_id']}):\nDocument Title: {doc['title']}\nDocument Date: {doc['date']}{is_latest}\n{excerpts}")
     context = "\n\n".join(parts)
     
@@ -125,7 +134,7 @@ def execute_trace(query, project=None, doc_id=None, date_from=None, date_to=None
     if sum_parts:
         context += "\n\n=== Hierarchical Summary Context ===\n" + "\n\n".join(sum_parts)
         
-    sys_prompt = "You are ScribeLink AI, a document analysis assistant. Analyze the excerpts and answer based ONLY on context. Chunks are sorted chronologically (oldest to newest). If different sources contain contradicting decisions, tasks, or specifications for the same topic, you MUST prioritize the newer document (marked as LATEST REVISION / OVERRIDE SOURCE) and note that it overrides the older information. Cite matching sources as [1], [2] corresponding to their source number. Never use raw document IDs. You MUST format your response by wrapping your sections in XML tags like this: <concise>- bullet 1\n- bullet 2</concise> and <elaborate>detailed reasoning with headers</elaborate>. Format equations in KaTeX ($...$ or $$...$$). Tables in markdown."
+    sys_prompt = "You are ScribeLink AI, a document analysis assistant. Analyze the excerpts and answer based ONLY on context. Chunks are sorted chronologically (oldest to newest) and marked with their page numbers. If different sources contain contradicting decisions, tasks, or specifications for the same topic, you MUST prioritize the newer document (marked as LATEST REVISION / OVERRIDE SOURCE) and note that it overrides the older information. Cite matching sources as [SourceNumber, Page X] (e.g. [1, Page 3]) matching their source and page number in the excerpt label. Never use raw document IDs. You MUST format your response by wrapping your sections in XML tags like this: <concise>- bullet 1\n- bullet 2</concise> and <elaborate>detailed reasoning with headers</elaborate>. Format equations in KaTeX ($...$ or $$...$$). Tables in markdown."
     ans = query_llm(sys_prompt, build_prompt(context, query))
     
     # ponytail: post-process local LLM output to guarantee XML tags for UI compatibility

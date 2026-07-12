@@ -631,7 +631,7 @@ document.addEventListener("DOMContentLoaded", () => {
             d.citations.forEach((c, i) => {
                 const ht = highlightKW(c.text, currentQuery);
                 const scoreBadge = `<span class="badge" style="background:rgba(56,189,248,0.1); border-color:rgba(56,189,248,0.3); color:#38bdf8; font-weight:600; margin-left:8px; font-size:10px;">Score: ${(c.confidence || 0.00).toFixed(2)}</span>`;
-                cl.innerHTML += `<details class="disclosure"><summary><span class="cit-num">[${i + 1}]</span> ${c.meeting_title}${scoreBadge}</summary><div><p><strong>Date:</strong> ${c.date} | <strong>Project:</strong> ${c.project_id || 'Unknown'}</p><p style="margin-top:8px">${ht}</p><div style="margin-top:8px;display:flex;gap:6px"><button class="view-doc-btn" data-id="${c.meeting_id}" data-text="${c.text.replace(/"/g, '&quot;')}">View Doc</button><a href="/api/download/${c.meeting_id}" class="dl-btn">↓ Download</a></div></div></details>`;
+                cl.innerHTML += `<details class="disclosure"><summary><span class="cit-num">[${i + 1}]</span> ${c.meeting_title}${scoreBadge}</summary><div><p><strong>Date:</strong> ${c.date} | <strong>Page:</strong> ${c.page_number || 1} | <strong>Project:</strong> ${c.project_id || 'Unknown'}</p><p style="margin-top:8px">${ht}</p><div style="margin-top:8px;display:flex;gap:6px"><button class="view-doc-btn" data-id="${c.meeting_id}" data-text="${c.text.replace(/"/g, '&quot;')}">View Doc</button><a href="/api/download/${c.meeting_id}" class="dl-btn">↓ Download</a></div></div></details>`;
             });
             try { renderGraph(d.graph || { nodes: [], edges: [] }); } catch (e) {}
             try { renderDecisions((d.graph || {}).decisions || []); } catch (e) {}

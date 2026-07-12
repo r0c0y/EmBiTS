@@ -94,6 +94,10 @@ async def get_audits():
     logs = [dict(r) for r in c.fetchall()]; conn.close()
     return {"logs": logs}
 
+@app.post("/api/audit_logs/verify")
+async def verify_ledger():
+    return verify_audit_ledger()
+
 @app.post("/api/auth/signup")
 async def signup(email: str = Form(...), name: str = Form(...), password: str = Form(...)):
     import hashlib, secrets
@@ -223,9 +227,23 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
         except Exception:
             pass
 
-    chunks = __import__("ingestion").chunk_text(result["text"])
-    for i, ch in enumerate(chunks):
-        c.execute("INSERT INTO chunks VALUES (?,?,?,?)", (f"{doc_id}-{i}", doc_id, i, ch))
+    # PageIndex: reasoning-based page-by-page chunk indexing
+    ocr_res = result.get("ocr_result")
+    if ocr_res and hasattr(ocr_res, "pages") and ocr_res.pages:
+        chunk_idx = 0
+        for page in ocr_res.pages:
+            page_num = page.page_num or 1
+            page_chunks = __import__("ingestion").chunk_text(page.text)
+            for ch in page_chunks:
+                if ch.strip():
+                    c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
+                              (f"{doc_id}-{chunk_idx}", doc_id, chunk_idx, ch, page_num))
+                    chunk_idx += 1
+    else:
+        chunks = __import__("ingestion").chunk_text(result["text"])
+        for i, ch in enumerate(chunks):
+            c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
+                      (f"{doc_id}-{i}", doc_id, i, ch, 1))
     conn.commit(); conn.close()
 
     # Persist original for preview
