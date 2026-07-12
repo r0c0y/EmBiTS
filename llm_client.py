@@ -5,6 +5,11 @@ import os
 from config import OLLAMA_BASE_URL, LLM_MODEL, GROQ_API_KEY, GROQ_MODEL, USE_GROQ_FALLBACK
 
 def _call_ollama(messages, temperature=0.0):
+    try:
+        from ollama_runner import ensure_ollama_running
+        ensure_ollama_running()
+    except Exception:
+        pass
     url = f"{OLLAMA_BASE_URL}/api/chat"
     payload = {
         "model": LLM_MODEL,

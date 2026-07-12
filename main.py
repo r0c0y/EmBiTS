@@ -32,6 +32,11 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.on_event("startup")
 def startup():
+    try:
+        from ollama_runner import ensure_ollama_running
+        ensure_ollama_running()
+    except Exception:
+        pass
     init_db()
     auto_edges()
     import threading

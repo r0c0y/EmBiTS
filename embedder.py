@@ -5,6 +5,11 @@ from config import OLLAMA_BASE_URL, EMBEDDING_MODEL
 
 def get_embedding(text: str) -> list:
     """Generate text embeddings using Ollama local endpoints."""
+    try:
+        from ollama_runner import ensure_ollama_running
+        ensure_ollama_running()
+    except Exception:
+        pass
     url = f"{OLLAMA_BASE_URL}/api/embeddings"
     payload = {
         "model": EMBEDDING_MODEL,
