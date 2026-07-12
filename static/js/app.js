@@ -821,6 +821,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     item.status = "duplicate";
                 } else if (d.status === "success") {
                     item.status = "done";
+                    try {
+                        refreshProjectDropdowns();
+                        loadRegistry();
+                    } catch (e) {
+                        console.error("Realtime list refresh failed", e);
+                    }
                 } else {
                     item.status = "error";
                 }
