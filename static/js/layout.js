@@ -19,7 +19,13 @@ function initLayout() {
         gd.style.display=(showSum&&(showTim||showCit||showConf))?"flex":"none";
         rs.style.display=(showTim&&(showCit||showConf))?"flex":"none";
         g.style.gridTemplateColumns=(showSum&&(showTim||showCit||showConf))?"1.6fr auto 1fr":"1fr";
-        rp.style.gridTemplateRows="1fr auto 1fr";
+        if (showTim && (showCit || showConf)) {
+            rp.style.gridTemplateRows = "1fr auto 1fr";
+        } else if (showTim || showCit || showConf) {
+            rp.style.gridTemplateRows = "1fr";
+        } else {
+            rp.style.gridTemplateRows = "0px";
+        }
         document.querySelectorAll("#mt .ta").forEach(b=>{const p=b.dataset.panel;b.classList.toggle("active",p==="summary"?showSum:p==="timeline"?showTim:showCit&&!showConf)});
         setTimeout(cyR,50);
     };
