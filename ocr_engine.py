@@ -30,13 +30,6 @@ try:
 except ImportError:
     HAS_LLAMACPP = False
 
-try:
-    from surya.recognition import RecognitionPredictor
-    from surya.inference import SuryaInferenceManager
-    HAS_SURYA = True
-except ImportError:
-    HAS_SURYA = False
-
 from preprocess import preprocess_image
 
 
@@ -260,112 +253,10 @@ class RapidOCREngine(OCREngine):
         return results
 
 
-class SuryaEngine(OCREngine):
-    name = "surya"
-    priority = 90
-    requires_gpu = False
-
-    def __init__(self):
-        self._available = HAS_SURYA
-        self.rec_predictor = None
-
-    def is_available(self) -> bool:
-        return self._available
-
-    def _lazy_init(self):
-        if self.rec_predictor is None:
-            import torch
-            device = "cpu"
-            if torch.cuda.is_available():
-                device = "cuda"
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                device = "mps"
-            
-            os.environ["TORCH_DEVICE"] = device
-            manager = SuryaInferenceManager()
-            self.rec_predictor = RecognitionPredictor(manager)
-
-    def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
-        try:
-            self._lazy_init()
-            page_results = self.rec_predictor([image], full_page=True)
-            if not page_results:
-                return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name)
-            
-            page = page_results[0]
-            lines_text = []
-            blocks = []
-            
-            import re
-            for b in page.blocks:
-                clean_text = re.sub(r'<[^>]*>', '', b.html).strip() if b.html else ""
-                if not clean_text:
-                    continue
-                lines_text.append(clean_text)
-                
-                blocks.append({
-                    "text": clean_text,
-                    "bbox": b.bbox,
-                    "confidence": float(b.confidence) if b.confidence is not None else 1.0,
-                    "label": b.label,
-                    "reading_order": b.reading_order
-                })
-            
-            full_text = "\n".join(lines_text)
-            blocks.sort(key=lambda x: x["reading_order"])
-            md_lines = []
-            for b in blocks:
-                lbl = b["label"].lower()
-                txt = b["text"]
-                if "header" in lbl or "title" in lbl:
-                    md_lines.append(f"## {txt}")
-                elif "list" in lbl:
-                    md_lines.append(f"- {txt}")
-                elif "table" in lbl:
-                    md_lines.append(f"\n[Table Block]\n{txt}\n")
-                else:
-                    md_lines.append(txt)
-            
-            markdown = "\n\n".join(md_lines)
-            
-            return OCRPageResult(
-                page_num=page_num,
-                markdown=markdown,
-                text=full_text,
-                engine=self.name,
-                blocks=blocks,
-                metadata={"confidence": float(sum(b["confidence"] for b in blocks)) / len(blocks) if blocks else 1.0}
-            )
-        except Exception as e:
-            return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name, metadata={"error": str(e)})
-
-    def process_pdf(self, file_path: str, page_range: Optional[List[int]] = None) -> List[OCRPageResult]:
-        results = []
-        if not HAS_PYPDFIUM:
-            return results
-        import pypdfium2 as pdfium
-        try:
-            doc = pdfium.PdfDocument(file_path)
-            page_nums = set(page_range) if page_range else set(range(1, len(doc) + 1))
-            for i in sorted(list(page_nums)):
-                try:
-                    page_obj = doc[i - 1]
-                    pil_img = page_obj.render(scale=150/72).to_pil().convert("RGB")
-                    res = self.process_image(pil_img, page_num=i)
-                    results.append(res)
-                except Exception as e:
-                    results.append(OCRPageResult(page_num=i, markdown="", text="", engine=self.name, metadata={"error": str(e)}))
-            doc.close()
-        except Exception as e:
-            results.append(OCRPageResult(page_num=0, markdown="", text="", engine=self.name, metadata={"error": str(e)}))
-        return results
-
-
 class OCRManager:
     def __init__(self):
         self.engines: List[OCREngine] = [
             LiteParseEngine(),
-            SuryaEngine(),
             RapidOCREngine(),
         ]
         self.engines.sort(key=lambda e: -e.priority)

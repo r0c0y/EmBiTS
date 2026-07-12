@@ -36,18 +36,9 @@ def init_db():
     try: c.execute("ALTER TABLE chunks ADD COLUMN page_number INTEGER DEFAULT 1;")
     except: pass
 
-    from seed_data import seed
-    seed(c)
     conn.commit()
-    c.execute("SELECT id, transcript_text FROM meetings WHERE id NOT IN (SELECT meeting_id FROM chunks)")
-    rows = c.fetchall()
-    from ingestion import chunk_text
-    for mid, text in rows:
-        for i, ch in enumerate(chunk_text(text)):
-            try: c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)", (f"{mid}-{i}", mid, i, ch, 1))
-            except: pass
-    conn.commit(); conn.close()
-    
+    conn.close()
+
     from vector_store import init_vector_table, build_missing_embeddings
     init_vector_table()
     

@@ -173,84 +173,6 @@ async def translate(req: TranslationRequest, auth=Depends(require_auth)):
          raise HTTPException(500, "Translation failed.")
     return {"status": "success", "translated_text": translated}
 
-def background_ingest_ocr(doc_id: str, file_path: str, filename: str, project_id: str, safe_title: str, user: str, user_dept: str):
-    import os, sqlite3, re
-    from database import get_db_connection
-    from ingestion import ingest, chunk_text
-    from vector_store import build_missing_embeddings
-    from summarizer import process_new_document_background
-    
-    try:
-        with open(file_path, "rb") as f:
-            result = ingest(f, filename, size=os.path.getsize(file_path), base_dir=BASE_DIR)
-            
-        doc_date = result["detected_date"] or datetime.now().strftime("%Y-%m-%d")
-        
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        c.execute("""
-            UPDATE meetings 
-            SET transcript_text=?, date=?, ocr_quality=?, ocr_engine=?, page_count=?
-            WHERE id=?
-        """, (
-            result["text"], doc_date, result.get("ocr_quality", "high"), 
-            result.get("ocr_engine"), result.get("page_count", 1), doc_id
-        ))
-        
-        ocr_result_obj = result.get("ocr_result")
-        if ocr_result_obj is not None:
-            try:
-                from ocr_storage import store_ocr_result
-                stored = store_ocr_result(
-                    base_dir=BASE_DIR,
-                    doc_id=doc_id,
-                    filename=filename,
-                    ocr_result=ocr_result_obj,
-                    engine_name=result.get("ocr_engine", "unknown"),
-                    page_count=result.get("page_count", 1),
-                    detected_date=doc_date,
-                )
-                c.execute("UPDATE meetings SET ocr_json=?, ocr_markdown=?, ocr_engine=?, page_count=? WHERE id=?",
-                    (stored.get("ocr_json"), stored.get("ocr_markdown"), stored.get("ocr_engine"), stored.get("ocr_page_count"), doc_id))
-            except Exception:
-                pass
-        
-        c.execute("DELETE FROM chunks WHERE meeting_id=?", (doc_id,))
-        
-        chunks = []
-        if ocr_result_obj and hasattr(ocr_result_obj, "pages") and ocr_result_obj.pages:
-            chunk_idx = 0
-            for page in ocr_result_obj.pages:
-                page_num = page.page_num or 1
-                page_chunks = chunk_text(page.text)
-                for ch in page_chunks:
-                    if ch.strip():
-                        c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                                  (f"{doc_id}-{chunk_idx}", doc_id, chunk_idx, ch, page_num))
-                        chunks.append(ch)
-                        chunk_idx += 1
-        else:
-            chunks = chunk_text(result["text"])
-            for i, ch in enumerate(chunks):
-                c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                          (f"{doc_id}-{i}", doc_id, i, ch, 1))
-                chunks.append(ch)
-        
-        conn.commit()
-        conn.close()
-        
-        build_missing_embeddings()
-        auto_edges()
-        
-        log_audit(user, user_dept, "OCR_COMPLETE", f"Background OCR complete: {filename} ({len(chunks)} chunks, engine={result.get('ocr_engine')})")
-        process_new_document_background(doc_id, project_id, result["text"], safe_title)
-        
-    except Exception as e:
-        print(f"Background ingestion failed for doc {doc_id}: {str(e)}")
-        log_audit(user, user_dept, "OCR_FAILED", f"Background OCR failed for {filename}: {str(e)}")
-
-
 @app.post("/api/upload")
 async def upload_document(file: UploadFile = File(...), project_id: str = Form("Unknown"), user: str = Form("Unknown"), user_dept: str = Form("General"), background_tasks: BackgroundTasks = None, auth=Depends(require_auth)):
     allowed = {".txt",".pdf",".docx",".xlsx",".xls",".pptx",".png",".jpg",".jpeg",".tiff",".bmp",".csv",".md",".json"}
@@ -268,74 +190,78 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
     if row:
         conn.close()
         return {"status": "duplicate", "message": "Duplicate document in this project.", "document_id": row[0]}
-    
+    try:
+        result = ingest(io.BytesIO(raw), file.filename, size=len(raw), base_dir=BASE_DIR)
+    except ValueError as e:
+        conn.close()
+        raise HTTPException(400, str(e))
     doc_id = f"DOC-{uuid.uuid4().hex[:8].upper()}"
+    doc_date = result["detected_date"] or datetime.now().strftime("%Y-%m-%d")
+    lot_id = f"LOT-{doc_date[:7]}-{doc_id[-4:]}"
     safe_title = "".join(c for c in file.filename.rsplit(".", 1)[0] if c.isalnum() or c in " _-").strip() or "Untitled"
-    
-    dest_dir = os.path.join(BASE_DIR, "static", "originals")
-    os.makedirs(dest_dir, exist_ok=True)
-    dest_path = os.path.join(dest_dir, f"{doc_id}_{file.filename}")
-    with open(dest_path, "wb") as f:
-        f.write(raw)
-        
-    is_ocr = ext in (".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp")
-    
-    if is_ocr:
-        doc_date = datetime.now().strftime("%Y-%m-%d")
-        lot_id = f"LOT-{doc_date[:7]}-{doc_id[-4:]}"
-        
-        c.execute("INSERT INTO meetings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (doc_id, safe_title, doc_date, lot_id, project_id, file.filename, len(raw),
-             "OCR processing in progress. Please check back in a moment...", ext.lstrip("."),
-             chash, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-             "pending", 0, None, None, "pending", 0, user))
-             
-        c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                  (f"{doc_id}-0", doc_id, 0, "OCR processing in progress. Please check back in a moment...", 1))
-        
-        conn.commit(); conn.close()
-        log_audit(user, user_dept, "UPLOAD_PENDING", f"Uploaded: {file.filename} ({size_label}, queued for background OCR)")
-        
-        if background_tasks:
-            background_tasks.add_task(background_ingest_ocr, doc_id, dest_path, file.filename, project_id, safe_title, user, user_dept)
-            
-        return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": 1, "message": "OCR queued in background"}
-        
-    else:
+
+    # Insert row first so we have doc_id for structured OCR storage
+    c.execute("INSERT INTO meetings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (doc_id, safe_title, doc_date, lot_id, project_id, file.filename, len(raw),
+         result["text"], result["source_type"],
+         chash, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+         result.get("ocr_quality", "auto"), 0,
+         None, None, result.get("ocr_engine"), result.get("page_count", 1), user))
+
+    # Store structured OCR sidecar files with real doc_id
+    ocr_result_obj = result.get("ocr_result")
+    if ocr_result_obj is not None:
         try:
-            result = ingest(io.BytesIO(raw), file.filename, size=len(raw), base_dir=BASE_DIR)
-        except ValueError as e:
-            conn.close()
-            raise HTTPException(400, str(e))
-            
-        doc_date = result["detected_date"] or datetime.now().strftime("%Y-%m-%d")
-        lot_id = f"LOT-{doc_date[:7]}-{doc_id[-4:]}"
-        
-        c.execute("INSERT INTO meetings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (doc_id, safe_title, doc_date, lot_id, project_id, file.filename, len(raw),
-             result["text"], result["source_type"],
-             chash, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-             result.get("ocr_quality", "auto"), 0,
-             None, None, result.get("ocr_engine"), result.get("page_count", 1), user))
-             
+            from ocr_storage import store_ocr_result
+            stored = store_ocr_result(
+                base_dir=BASE_DIR,
+                doc_id=doc_id,
+                filename=file.filename,
+                ocr_result=ocr_result_obj,
+                engine_name=result.get("ocr_engine", "unknown"),
+                page_count=result.get("page_count", 1),
+                detected_date=doc_date,
+            )
+            c.execute("UPDATE meetings SET ocr_json=?, ocr_markdown=?, ocr_engine=?, page_count=? WHERE id=?",
+                (stored.get("ocr_json"), stored.get("ocr_markdown"), stored.get("ocr_engine"), stored.get("ocr_page_count"), doc_id))
+        except Exception:
+            pass
+
+    # PageIndex: reasoning-based page-by-page chunk indexing
+    ocr_res = result.get("ocr_result")
+    if ocr_res and hasattr(ocr_res, "pages") and ocr_res.pages:
+        chunk_idx = 0
+        for page in ocr_res.pages:
+            page_num = page.page_num or 1
+            page_chunks = __import__("ingestion").chunk_text(page.text)
+            for ch in page_chunks:
+                if ch.strip():
+                    c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
+                              (f"{doc_id}-{chunk_idx}", doc_id, chunk_idx, ch, page_num))
+                    chunk_idx += 1
+    else:
         chunks = __import__("ingestion").chunk_text(result["text"])
         for i, ch in enumerate(chunks):
             c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
                       (f"{doc_id}-{i}", doc_id, i, ch, 1))
-                      
-        conn.commit(); conn.close()
-        log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {len(chunks)} chunks, native)")
-        auto_edges()
-        
-        if background_tasks:
-            from summarizer import process_new_document_background
-            background_tasks.add_task(process_new_document_background, doc_id, project_id, result["text"], safe_title)
-            
-        from vector_store import build_missing_embeddings
-        import threading
-        threading.Thread(target=build_missing_embeddings, daemon=True).start()
-        
-        return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": len(chunks)}
+    conn.commit(); conn.close()
+
+    # Persist original for preview
+    try:
+        dest_dir = os.path.join(BASE_DIR, "static", "originals")
+        os.makedirs(dest_dir, exist_ok=True)
+        dest = os.path.join(dest_dir, f"{doc_id}_{file.filename}")
+        with open(dest, "wb") as f:
+            f.write(raw)
+    except Exception:
+        pass
+
+    log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {len(chunks)} chunks, engine={result.get('ocr_engine','native')})")
+    auto_edges()
+    if background_tasks:
+        from summarizer import process_new_document_background
+        background_tasks.add_task(process_new_document_background, doc_id, project_id, result["text"], safe_title)
+    return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": len(chunks)}
 
 @app.get("/api/document/{doc_id}")
 async def get_document(doc_id: str):
