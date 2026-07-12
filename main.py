@@ -229,18 +229,19 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
 
     # PageIndex: reasoning-based page-by-page chunk indexing
     ocr_res = result.get("ocr_result")
+    chunks_count = 0
     if ocr_res and hasattr(ocr_res, "pages") and ocr_res.pages:
-        chunk_idx = 0
         for page in ocr_res.pages:
             page_num = page.page_num or 1
             page_chunks = __import__("ingestion").chunk_text(page.text)
             for ch in page_chunks:
                 if ch.strip():
                     c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                              (f"{doc_id}-{chunk_idx}", doc_id, chunk_idx, ch, page_num))
-                    chunk_idx += 1
+                              (f"{doc_id}-{chunks_count}", doc_id, chunks_count, ch, page_num))
+                    chunks_count += 1
     else:
         chunks = __import__("ingestion").chunk_text(result["text"])
+        chunks_count = len(chunks)
         for i, ch in enumerate(chunks):
             c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
                       (f"{doc_id}-{i}", doc_id, i, ch, 1))
@@ -256,12 +257,12 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
     except Exception:
         pass
 
-    log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {len(chunks)} chunks, engine={result.get('ocr_engine','native')})")
+    log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {chunks_count} chunks, engine={result.get('ocr_engine','native')})")
     auto_edges()
     if background_tasks:
         from summarizer import process_new_document_background
         background_tasks.add_task(process_new_document_background, doc_id, project_id, result["text"], safe_title)
-    return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": len(chunks)}
+    return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": chunks_count}
 
 @app.get("/api/document/{doc_id}")
 async def get_document(doc_id: str):
