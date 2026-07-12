@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>ScribeLink | Min Hosted Demo</title>
+    <title>ScribeLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v=12">
+    <link rel="stylesheet" href="/static/css/styles.css?v=1014">
+    <script src="https://unpkg.com/reicon@latest/cdn/reicon.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
     <script src="/static/js/marked.min.js"></script>
@@ -12,70 +13,120 @@
     <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
-<body><div class="app-container">
-<aside class="sidebar"><div class="logo"><span class="logo-icon">▲</span><h2>ScribeLink</h2><span class="version">v1.3</span></div>
-<nav class="nav-menu">
-<button class="nav-btn active" data-tab="search-tab"><i data-lucide="search" class="icon"></i> Search & Trace</button>
-<button class="nav-btn" data-tab="upload-tab"><i data-lucide="upload" class="icon"></i> Ingest</button>
-<button class="nav-btn" data-tab="registry-tab"><i data-lucide="database" class="icon"></i> Registry</button>
-<button class="nav-btn" data-tab="audit-tab"><i data-lucide="shield" class="icon"></i> Audits</button></nav>
-<div class="user-profile">
-<select id="user-selector" class="select-input">
-<option value="Dr. A. K. Sharma" data-dept="Design & TCAD">Dr. Sharma (Design)</option>
-<option value="Mr. H. S. Sodhi" data-dept="Fabrication Operations">Mr. Sodhi (Fab)</option>
-<option value="Mrs. Sunita Rao" data-dept="Quality Assurance">Mrs. Rao (QA)</option></select>
-<span id="user-dept-display" class="user-role">Dept: Design & TCAD</span></div></aside>
+<body>
+<!-- Login Overlay -->
+<div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">▲ ScribeLink</div>
+            <h2 id="auth-title">Sign In</h2>
+            <p id="auth-subtitle">Access the secure ScribeLink platform</p>
+        </div>
+        <div class="login-form">
+            <div class="login-group" id="login-name-group" style="display:none">
+                <label for="login-name">Full Name</label>
+                <input type="text" id="login-name" placeholder="e.g. Dr. A. K. Sharma" autocomplete="off" />
+            </div>
+            <div class="login-group">
+                <label for="login-email">Email Address</label>
+                <input type="email" id="login-email" placeholder="e.g. anjali@scl.gov.in" autocomplete="off" />
+            </div>
+            <div class="login-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" autocomplete="off" />
+            </div>
+            <div id="login-error-msg" style="color:#f43f5e;font-size:12px;display:none;text-align:center;"></div>
+            <button id="login-submit-btn" class="login-btn">Sign In</button>
+            <div style="text-align:center;margin-top:10px">
+                <a href="#" id="auth-toggle-link" style="color:#38bdf8;font-size:12px;text-decoration:none">New to ScribeLink? Sign Up</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-container" id="app-content-wrapper" style="display:none">
+<aside class="sidebar">
+  <div class="logo" style="margin-bottom: 24px; justify-content: center; padding: 0; display: flex;">
+    <span class="logo-icon" style="font-size: 24px; color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56,189,248,0.4));">▲</span>
+  </div>
+  <nav class="nav-menu" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; flex: 1;">
+    <button class="nav-btn active" data-tab="search-tab" data-tooltip="Search & Trace"><re-icon icon="search" weight="filled" size="28"></re-icon></button>
+    <button class="nav-btn" data-tab="upload-tab" data-tooltip="Ingest"><re-icon icon="cloud-upload" size="28"></re-icon></button>
+    <button class="nav-btn" id="nav-registry-btn" data-tab="registry-tab" data-tooltip="Registry"><re-icon icon="database" size="28"></re-icon></button>
+    <button class="nav-btn" id="nav-audits-btn" data-tab="audit-tab" data-tooltip="Audits"><re-icon icon="shield" weight="filled" size="28"></re-icon></button>
+    <a href="/admin" id="admin-panel-link" class="nav-btn admin-only-link" data-tooltip="Admin Panel" style="display: none;"><re-icon icon="settings" weight="filled" size="28"></re-icon></a>
+  </nav>
+  
+  <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border);">
+    <button class="nav-btn" id="btn-logout" data-tooltip="Sign Out" style="color: #ef4444 !important;"><re-icon icon="logout4" weight="filled" size="28"></re-icon></button>
+    <div class="user-avatar-circle" id="user-avatar-initial" data-tooltip="User Profile" style="cursor: default; margin-top: 8px;">U</div>
+  </div>
+</aside>
 <main class="workspace">
-<header class="workspace-header"><div><h1 id="tab-title">Search & Traceability</h1><p id="tab-subtitle" class="subtitle">Query SCL meeting records.</p></div><div class="hdr-actions"><button id="theme-btn" class="tb-btn" title="Toggle theme">🌙</button></div></header>
+<header class="workspace-header"><div><h1 id="tab-title">Search & Traceability</h1><p id="tab-subtitle" class="subtitle">Query SCL meeting records.</p></div><div class="hdr-actions"><button id="theme-btn" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button></div></header>
 <section id="search-tab" class="tab-content active">
 <form id="search-form" class="search-form">
 <div class="search-input-wrapper">
-<input type="text" id="query-input" list="q-suggestions" placeholder="e.g. 'Why did Lot 2 yield drop?'" required autocomplete="off">
-<datalist id="q-suggestions"><option value="Why did Lot 2 yield drop?"><option value="Metal 1 spacing design rules"><option value="Lot 2 yield excursion"><option value="Design Specification review"><option value="Shrink approval meeting"></datalist>
+<input type="text" id="query-input" placeholder="e.g. 'Why did Lot 2 yield drop?'" required autocomplete="off">
 <button type="submit" class="search-submit">Search</button></div>
-<div class="search-filters"><label>Filter Dept:</label>
-<select id="dept-filter" class="select-input">
-<option value="">All Depts</option>
-<option value="Design & TCAD">Design & TCAD</option>
-<option value="Fabrication Operations">Fab Ops</option>
-<option value="Quality Assurance">QA</option></select></div></form>
+<div class="search-filters"><label>Project:</label>
+<div class="proj-drop" id="search-proj-drop" style="width: 240px;"><input type="text" id="project-filter" placeholder="All Projects" readonly autocomplete="off"><div class="proj-menu" id="search-proj-menu" style="align-items: stretch !important; justify-content: flex-start !important; text-align: left !important;"></div></div>
+<label>Document:</label>
+<div class="proj-drop" id="search-doc-drop" style="width: 240px;"><input type="text" id="document-filter" placeholder="All Documents" readonly autocomplete="off"><div class="proj-menu" id="search-doc-menu" style="align-items: stretch !important; justify-content: flex-start !important; text-align: left !important;"></div></div>
+<div class="cal-group"><label>From:</label><input type="text" id="date-from" class="select-input" placeholder="YYYY-MM-DD" readonly><div class="cal-picker" id="cal-from"></div></div>
+<div class="cal-group"><label>To:</label><input type="text" id="date-to" class="select-input" placeholder="YYYY-MM-DD" readonly><div class="cal-picker" id="cal-to"></div></div></div></form>
 <div id="history-chips" class="history-chips"></div>
 <div class="results-layout" id="grid">
 <div class="card panel" data-panel="summary"><div class="ph"><h3>AI Decision Summary</h3><span class="tg" id="summ-tg" style="display:none"><button class="tb-btn" data-mode="concise">Concise</button><button class="tb-btn active" data-mode="elaborate">Detailed</button></span><button class="mx" data-panel="summary">⛶</button></div><div id="ai-answer" class="ai-cnt"><p class="text-muted">Enter a query to retrieve analysis.</p></div></div>
 <div class="gd" id="gd"></div>
 <div class="right-panel" id="rp">
-<div class="card panel" data-panel="timeline"><div class="ph"><h3>Decision Trail Timeline</h3><button class="mx" data-panel="timeline">⛶</button></div><div id="cy-container" class="cy-container"><p class="text-muted">Run a search to visualize lineage.</p></div><div id="decisions-list" class="decisions-list"></div></div>
+<div class="card panel" data-panel="timeline"><div class="ph"><h3>Context Graph</h3><button class="mx" data-panel="timeline">⛶</button></div><div id="cy-container" class="cy-container"><p class="text-muted">Run a search to visualize lineage.</p></div><div id="decisions-list" class="decisions-list"></div></div>
 <div class="rs" id="rs"></div>
 <div class="card panel" data-panel="citations"><div class="ph"><h3>Cited Source Documents</h3><span id="conflicts-badge" class="conflicts-badge" style="display:none"></span><button class="mx" data-panel="citations">⛶</button></div><div id="citations-list"><p class="text-muted">Sources cited here.</p></div></div>
 <div id="conflicts-panel" class="card panel" style="display:none"><div class="ph"><h3>Spec Conflicts</h3><button class="mx" id="conflicts-close">✕</button></div><div id="conflicts-list"></div></div></div>
-<div class="mt" id="mt"><button class="ta active" data-panel="summary"><i data-lucide="file-text" class="icon"></i> Summary</button><button class="ta active" data-panel="timeline"><i data-lucide="git-branch" class="icon"></i> Timeline</button><button class="ta active" data-panel="citations"><i data-lucide="book-open" class="icon"></i> Citations</button></div></div></section>
+<div class="mt" id="mt"><button class="ta active" data-panel="summary"><i data-lucide="file-text" class="icon"></i> Summary</button><button class="ta active" data-panel="timeline"><i data-lucide="git-branch" class="icon"></i> Graph</button><button class="ta active" data-panel="citations"><i data-lucide="book-open" class="icon"></i> Citations</button></div></div></section>
 <section id="upload-tab" class="tab-content">
 <div class="card upload-card"><h3>Ingest New Documents</h3>
 <div class="upload-layout">
 <div class="upload-left">
 <form id="upload-form" class="upload-form">
-<div id="drop-zone" class="drop-zone"><p>Drop .txt/.pdf files here</p><input type="file" id="file-input" accept=".txt,.pdf" hidden multiple></div>
+<div id="drop-zone" class="drop-zone"><p>Drop files here (.txt, .pdf, .docx, .xlsx, .pptx, .png, .jpg, .jpeg, etc.)</p><input type="file" id="file-input" accept=".txt,.pdf,.docx,.xlsx,.xls,.pptx,.png,.jpg,.jpeg,.tiff,.bmp,.csv,.md,.json" hidden multiple></div>
 <div class="drop-divider">or</div>
 <span class="browse-link" onclick="document.getElementById('file-input').click()">Browse your computer</span>
-<div class="form-group"><label>Lot ID</label><select id="upload-lot" class="select-input" required></select></div>
+<div class="form-group">
+<label>Project</label>
+<div style="display: flex; gap: 8px; align-items: center; position: relative;">
+<div class="proj-drop" id="upload-proj-drop" style="flex: 1;">
+<input type="text" id="upload-project" placeholder="Search or select project..." autocomplete="off" />
+<div class="proj-menu" id="upload-proj-menu"></div>
+</div>
+</div>
+</div>
 <button type="submit" class="submit-btn">Ingest</button></form></div>
 <div class="upload-right">
 <div class="queue-header"><span>Upload Progress</span><span id="queue-count" class="queue-count"></span></div>
-<div id="file-queue" class="file-queue"><p class="text-muted" style="font-size:12px">No files selected</p></div></div></div></div></section>
+<div id="file-queue" class="file-queue"><p class="text-muted" style="font-size:12px">No files selected</p></div>
+<div id="upload-success-toast" class="upload-success-toast" style="display:none">
+<span class="toast-tick">✓</span>
+<span class="toast-msg">Done</span>
+</div>
+</div></div></div></section>
 <section id="registry-tab" class="tab-content">
-<div class="card"><h3>SCL Master Project & Lot Registry</h3><div class="tc"><table id="registry-table"><thead><tr><th>Document</th><th>Lot ID</th><th>Date</th><th>Dept</th></tr></thead><tbody></tbody></table></div></div></section>
+<div class="card"><h3>Project Registry</h3>
+<div class="reg-filters"><input type="text" id="reg-search" placeholder="Search by title..."><select id="reg-source"><option value="">All types</option><option value="pdf">PDF</option><option value="docx">DOCX</option><option value="txt">TXT</option><option value="image">IMAGE</option></select><div class="cal-group"><label>From:</label><input type="text" id="reg-from" placeholder="YYYY-MM-DD" readonly style="width:110px;"><div class="cal-picker" id="cal-reg-from"></div></div><div class="cal-group"><label>To:</label><input type="text" id="reg-to" placeholder="YYYY-MM-DD" readonly style="width:110px;"><div class="cal-picker" id="cal-reg-to"></div></div><select id="reg-sort"><option value="date">Sort: Date</option><option value="name">Sort: Name</option><option value="size">Sort: Size</option></select></div>
+<div class="reg-layout"><div class="reg-sidebar" id="reg-projects"><p class="text-muted">Loading projects...</p></div><div class="reg-main" id="reg-docs-main"><div id="reg-docs"><p class="text-muted">Select a project to view documents.</p></div><div id="reg-activity" class="reg-activity"><h4>Activity</h4><div id="reg-activity-list"></div></div></div></div></div></section>
 <section id="audit-tab" class="tab-content">
-<div class="card"><h3>Compliance & Security Audit Trail</h3><div style="margin-bottom:12px"><button id="btn-verify-ledger" class="submit-btn" style="width:auto;padding:6px 12px;font-size:12px;">Verify Ledger</button></div><div class="tc"><table id="audit-table"><thead><tr><th>Time</th><th>User</th><th>Dept</th><th>Action</th><th>Details</th></tr></thead><tbody></tbody></table></div></div></section></main></div>
+<div class="card"><h3>Compliance & Security Audit Trail</h3><div style="margin-bottom:12px; display:flex; gap:10px;"><input type="text" id="audit-search-filter" placeholder="Filter audits by user, action, details, date..." style="padding:8px 12px; border-radius:6px; font-size:12px; max-width:400px; width: 100%;" /></div><div class="tc"><table id="audit-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody></tbody></table></div></div></section></main></div>
 <div id="bk" class="bk"></div>
 <div id="viewer-overlay" class="viewer-overlay">
 <div class="viewer-content">
-<header class="viewer-header"><h3 id="viewer-title">Document Preview</h3><div style="display:flex;gap:28px"><button id="viewer-download" class="viewer-dl" title="Download document">↓</button><button id="viewer-close" class="viewer-close">&times;</button></div></header>
+<header class="viewer-header"><h3 id="viewer-title">Document Preview</h3><div style="display:flex;gap:28px"><button id="viewer-ocr" class="viewer-dl" title="See OCR output" style="background:#1e40af;">👁 OCR</button><button id="viewer-download" class="viewer-dl" title="Download document">↓</button><button id="viewer-close" class="viewer-close">&times;</button></div></header>
 <div class="viewer-body">
 <div class="viewer-left"><h4>Retrieved Section</h4><p id="viewer-snippet-text" class="viewer-snippet"></p><div class="viewer-meta"><span id="viewer-meta-dept" class="badge">Dept</span><span id="viewer-meta-date" class="badge">Date</span></div></div>
-<div class="viewer-right"><h4>Full Document</h4><pre id="viewer-full-text" class="viewer-pre"></pre></div></div></div></div>
-<script src="/static/js/utils.js?v=12"></script>
+<div class="viewer-right"><h4>Full Document</h4><div id="viewer-full-text" class="viewer-pre" style="flex:1; overflow-y:auto;"></div></div></div></div></div>
+<script src="/static/js/utils.js?v=1014"></script>
 <div id="cit-tooltip" class="cit-tooltip"></div>
-<script src="/static/js/graph.js?v=5"></script>
-<script src="/static/js/layout.js?v=5"></script>
-<script src="/static/js/app.js?v=11"></script>
+<script src="/static/js/graph.js?v=1014"></script>
+<script src="/static/js/layout.js?v=1014"></script>
+<script src="/static/js/app.js?v=1014"></script>
 </body></html>

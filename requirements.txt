@@ -2,4 +2,18 @@ fastapi
 jinja2
 python-multipart
 uvicorn
-httpx
+pdfplumber
+python-docx
+python-pptx
+pandas
+openpyxl
+pillow
+pypdfium2
+liteparse
+rapidocr
+opencv-python-headless
+
+# Optional: Chandra OCR 2 GGUF support (air-gapped, Windows/Linux/macOS)
+# Install with: pip install llama-cpp-python
+# On GPU: install CUDA-enabled wheels, see https://abetlen.github.io/llama-cpp-python/install/
+# llama-cpp-python

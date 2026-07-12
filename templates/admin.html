@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>ScribeLink | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=1014">
+    <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/reicon@latest/cdn/reicon.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/static/js/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        try {
+            const auth = JSON.parse(localStorage.getItem("scl_auth"));
+            if (!auth || auth.role !== "admin") {
+                window.location.href = "/";
+            }
+        } catch(e) {
+            window.location.href = "/";
+        }
+    </script>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <div class="logo"><span class="logo-icon">▲</span><h2>Admin</h2></div>
+        <nav class="admin-nav">
+            <button class="admin-nav-btn active" data-page="dashboard"><i data-lucide="layout-dashboard" class="icon"></i> Dashboard</button>
+            <button class="admin-nav-btn" data-page="audits"><i data-lucide="shield" class="icon"></i> Audits</button>
+            <button class="admin-nav-btn" data-page="documents"><i data-lucide="file-text" class="icon"></i> Documents</button>
+            <button class="admin-nav-btn" data-page="projects"><i data-lucide="database" class="icon"></i> Projects</button>
+            <button class="admin-nav-btn" data-page="users"><i data-lucide="users" class="icon"></i> Users</button>
+            <button class="admin-nav-btn" data-page="knowledge-map"><i data-lucide="network" class="icon"></i> Knowledge Map</button>
+        </nav>
+        <div class="admin-footer"><a href="/" class="back-link">← Back to App</a></div>
+    </aside>
+    <main class="admin-main">
+        <header class="workspace-header"><div><h1 id="admin-title">Dashboard</h1><p id="admin-subtitle" class="subtitle">System overview and management.</p></div><div class="hdr-actions"><button id="theme-btn" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button></div></header>
+        <section id="admin-dashboard" class="admin-section active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="stat-docs">-</div><div class="stat-label">Total Documents</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-projects">-</div><div class="stat-label">Projects</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-chunks">-</div><div class="stat-label">Chunks Indexed</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-audits">-</div><div class="stat-label">Audit Entries</div></div>
+            </div>
+            <div class="card" style="margin-top:20px; margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="margin:0">System Activity Trends</h3>
+                    <div style="display:flex;gap:4px;background:var(--border);padding:2px;border-radius:6px" id="timeframe-switch">
+                        <button class="tb-btn active" data-range="weekly" onclick="window.changeTimeframeRange('weekly')" style="padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">Weekly</button>
+                        <button class="tb-btn" data-range="monthly" onclick="window.changeTimeframeRange('monthly')" style="padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">Monthly</button>
+                        <button class="tb-btn" data-range="yearly" onclick="window.changeTimeframeRange('yearly')" style="padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">Yearly</button>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+                    <div class="stat-card" style="background:rgba(255,255,255,0.02)">
+                        <div class="stat-value" id="tf-uploads">-</div>
+                        <div class="stat-label">New Document Uploads</div>
+                    </div>
+                    <div class="stat-card" style="background:rgba(255,255,255,0.02)">
+                        <div class="stat-value" id="tf-activity">-</div>
+                        <div class="stat-label">Total Audit Events</div>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-grid">
+                <div class="card"><h3>Actions by Type</h3><div id="admin-actions-chart" class="admin-chart"></div></div>
+                <div class="card"><h3>Documents by Source</h3><div id="admin-sources-chart" class="admin-chart"></div></div>
+                <div class="card"><h3>Top Projects</h3><div id="admin-projects-chart" class="admin-chart"></div></div>
+            </div>
+        </section>
+        <section id="admin-audits" class="admin-section">
+            <div class="card"><h3>System Audit Logs</h3>
+            <div class="tc"><table id="admin-audit-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead><tbody><tr><td colspan="4" class="text-muted">Loading...</td></tr></tbody></table></div></div>
+        </section>
+        <section id="admin-documents" class="admin-section">
+            <div class="card"><h3>All Documents</h3>
+            <div class="reg-filters"><input type="text" id="admin-doc-search" placeholder="Search title..."><select id="admin-doc-project"><option value="">All projects</option></select></div>
+            <div class="tc"><table id="admin-doc-table"><thead><tr><th>ID</th><th>Title</th><th>Project</th><th>Type</th><th>Size</th><th>Created</th><th>Actions</th></tr></thead><tbody><tr><td colspan="7" class="text-muted">Loading...</td></tr></tbody></table></div></div>
+        </section>
+        <section id="admin-projects" class="admin-section">
+            <div class="card"><h3>Projects Overview</h3>
+            <div class="tc"><table id="admin-project-table"><thead><tr><th>Project</th><th>Documents</th><th>Total Size</th><th>Last Updated</th><th>Actions</th></tr></thead><tbody><tr><td colspan="5" class="text-muted">Loading...</td></tr></tbody></table></div></div>
+        </section>
+        <section id="admin-users" class="admin-section">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <h3 style="margin:0">User Directory</h3>
+                    <button class="add-user-btn" onclick="openAddUserModal()" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--text);color:var(--bg);border:none;border-radius:6px;cursor:pointer"><i data-lucide="plus" style="width:16px;height:16px"></i> Add User</button>
+                </div>
+                <div class="tc">
+                    <table id="admin-user-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" class="text-muted">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <section id="admin-knowledge-map" class="admin-section">
+            <div id="km-card" class="card" style="width:100% !important; height:calc(100vh - 80px) !important; display:flex; flex-direction:column; box-sizing:border-box; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h3 style="margin:0; font-size:16px;">Knowledge Map</h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <label style="font-size:11px; color:var(--text-muted)">Filter:</label>
+                        <select id="map-project-filter" style="padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:11px; min-width:120px;"></select>
+                        <button id="km-fullscreen-btn" onclick="toggleKMFullscreen()" style="padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:11px; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Toggle fullscreen">⛶ Expand</button>
+                    </div>
+                </div>
+                <div id="cy-admin-container" style="flex:1; width:100%; min-height:500px; border:1px solid var(--border); border-radius:8px; background:#0a0b0e; position:relative;"></div>
+                <p style="margin:4px 0 0;font-size:10px;color:var(--text-muted);">Click = select &amp; pin · Double-click = open document viewer · Click background = clear</p>
+            </div>
+        </section>
+    </main>
+</div>
+<div id="add-user-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="margin-top:0;margin-bottom:16px">Add New User</h3>
+        <form id="add-user-form" onsubmit="handleAddUser(event)">
+            <div style="margin-bottom:12px">
+                <label style="display:block;margin-bottom:4px;font-size:12px">Name</label>
+                <input type="text" id="new-user-name" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)">
+            </div>
+            <div style="margin-bottom:12px">
+                <label style="display:block;margin-bottom:4px;font-size:12px">Email</label>
+                <input type="email" id="new-user-email" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)">
+            </div>
+            <div style="margin-bottom:12px">
+                <label style="display:block;margin-bottom:4px;font-size:12px">Password</label>
+                <input type="password" id="new-user-pass" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)">
+            </div>
+            <div style="margin-bottom:20px">
+                <label style="display:block;margin-bottom:4px;font-size:12px">Role</label>
+                <select id="new-user-role" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)">
+                    <option value="user">Normal User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px">
+                <button type="button" onclick="closeAddUserModal()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text)">Cancel</button>
+                <button type="submit" style="padding:8px 16px;background:var(--text);color:var(--bg);border:none;border-radius:6px;cursor:pointer">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="viewer-overlay" class="viewer-overlay">
+<div class="viewer-content">
+<header class="viewer-header"><h3 id="viewer-title">Document Preview</h3><div style="display:flex;gap:28px"><button id="viewer-ocr" class="viewer-dl" title="See OCR output" style="background:#1e40af;">👁 OCR</button><button id="viewer-download" class="viewer-dl" title="Download document">↓</button><button id="viewer-close" class="viewer-close">&times;</button></div></header>
+<div class="viewer-body">
+<div class="viewer-left"><h4>Retrieved Section</h4><p id="viewer-snippet-text" class="viewer-snippet"></p><div class="viewer-meta"><span id="viewer-meta-dept" class="badge">Dept</span><span id="viewer-meta-date" class="badge">Date</span></div></div>
+<div class="viewer-right"><h4>Full Document</h4><div id="viewer-full-text" class="viewer-pre" style="flex:1; overflow-y:auto;"></div></div></div></div></div>
+<script src="/static/js/utils.js?v=1014"></script>
+<script src="/static/js/admin.js?v=1014"></script>
+<script>
+    // Wire up viewer close/download/ocr for admin page
+    document.getElementById('viewer-close').addEventListener('click', () => document.getElementById('viewer-overlay').style.display = 'none');
+    document.getElementById('viewer-download').addEventListener('click', () => { if(window._currentDocId) window.open('/api/download/'+window._currentDocId); });
+    document.getElementById('viewer-ocr').addEventListener('click', () => {
+        window._viewerMode = window._viewerMode === 'ocr' ? 'original' : 'ocr';
+        const btn = document.getElementById('viewer-ocr');
+        btn.innerText = window._viewerMode === 'ocr' ? '📄 Original' : '👁 OCR';
+        renderViewerContent();
+    });
+
+    // Fullscreen toggle for Knowledge Map
+    window._kmFullscreen = false;
+    const _kmOriginalStyle = document.getElementById('km-card')?.getAttribute('style') || '';
+    window.toggleKMFullscreen = () => {
+        const card = document.getElementById('km-card');
+        const btn = document.getElementById('km-fullscreen-btn');
+        if (!card) return;
+        window._kmFullscreen = !window._kmFullscreen;
+        if (window._kmFullscreen) {
+            card.setAttribute('style', 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;border-radius:0;margin:0;border:none;display:flex;flex-direction:column;box-sizing:border-box;padding:12px;background:var(--card-bg);');
+            btn.textContent = '✕ Exit';
+        } else {
+            card.setAttribute('style', _kmOriginalStyle);
+            btn.textContent = '⛶ Expand';
+        }
+        // Re-fit the graph after resize
+        setTimeout(() => { if (window.cyAdmin) window.cyAdmin.resize().fit(50); }, 100);
+    };
+    // ESC key to exit fullscreen
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && window._kmFullscreen) toggleKMFullscreen();
+    });
+</script>
+</body>
+</html>

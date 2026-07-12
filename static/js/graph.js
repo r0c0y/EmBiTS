@@ -28,7 +28,7 @@ function renderGraph(graph) {
             {selector:'.faded', style:{'opacity':0.15}},
             {selector:'.highlighted', style:{'border-width':3,'border-color':'#00e5ff'}}
         ],
-        layout:{name:'breadthfirst',directed:true,spacingFactor:1.5,fit:true,padding:30,animate:false},
+        layout:{name:'cose', animate:false, fit:true, padding:30},
         zoomingEnabled:true, userZoomingEnabled:true, panningEnabled:true, userPanningEnabled:true
     });
     cy.on('mouseover','node', function(evt) {
