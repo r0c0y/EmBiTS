@@ -11,6 +11,7 @@ pillow
 pypdfium2
 liteparse
 rapidocr
+pymupdf4llm
 opencv-python-headless
 
 # Optional: Chandra OCR 2 GGUF support (air-gapped, Windows/Linux/macOS)
