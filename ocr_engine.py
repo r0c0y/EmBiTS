@@ -186,7 +186,22 @@ class RapidOCREngine(OCREngine):
     def _get_backend(self):
         if self._backend is None and self._available:
             try:
-                self._backend = RapidOCR()
+                # Check for high-accuracy PP-OCRv5/v3 models in the local models/ocr folder
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                ocr_model_dir = os.path.join(base_dir, "models", "ocr")
+                
+                det_path = os.path.join(ocr_model_dir, "det.onnx")
+                rec_path = os.path.join(ocr_model_dir, "rec.onnx")
+                dict_path = os.path.join(ocr_model_dir, "dict.txt")
+                
+                if os.path.exists(det_path) and os.path.exists(rec_path) and os.path.exists(dict_path):
+                    self._backend = RapidOCR(
+                        det_model_path=det_path,
+                        rec_model_path=rec_path,
+                        rec_keys_path=dict_path
+                    )
+                else:
+                    self._backend = RapidOCR()
             except Exception:
                 self._available = False
         return self._backend

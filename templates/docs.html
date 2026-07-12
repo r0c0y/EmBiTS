@@ -350,6 +350,24 @@
             </div>
 
             <div class="card">
+                <h2>High-Accuracy PP-OCRv5 Offline Model Upgrade</h2>
+                <p>For processing low-resolution scans, hand-written minutes, or multilingual documents (such as Hindi or Latin text), the ingestion engine supports drop-in high-accuracy PP-OCRv5 model weights in ONNX format:</p>
+                <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    <ol style="margin-left: 20px;">
+                        <li style="margin-bottom: 6px;">Create a folder at <code>hosted/models/ocr/</code>.</li>
+                        <li style="margin-bottom: 6px;">Download the PP-OCRv5 detection model (<code>det.onnx</code>) and recognition model (<code>rec.onnx</code> + <code>dict.txt</code>) from <a href="https://huggingface.co/monkt/paddleocr-onnx" target="_blank" style="color:var(--primary);">monkt/paddleocr-onnx on Hugging Face</a>.</li>
+                        <li style="margin-bottom: 6px;">Place the files inside the folder:
+                            <pre style="margin: 6px 0; background: #030712; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace;">
+hosted/models/ocr/det.onnx
+hosted/models/ocr/rec.onnx
+hosted/models/ocr/dict.txt</pre>
+                        </li>
+                        <li style="margin-bottom: 6px;">The engine will automatically detect these files on startup and load the high-accuracy models instead of the default standard ones.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card">
                 <h2>Local AI Models Configuration</h2>
                 <p>All model inferences are executed locally via the Ollama server: </p>
                 <table>
