@@ -668,6 +668,26 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
                                 <span>summarizer.py</span>
                                 <span class="badge-status stable" style="margin-left: auto;">stable</span>
                             </div>
+                            <div class="file-tree-item" onclick="selectFile('ollama_runner.py', this)">
+                                <i data-lucide="file-code" style="color: #ef4444;"></i>
+                                <span>ollama_runner.py</span>
+                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
+                            </div>
+                            <div class="file-tree-item" onclick="selectFile('lineage.py', this)">
+                                <i data-lucide="file-code" style="color: #ef4444;"></i>
+                                <span>lineage.py</span>
+                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
+                            </div>
+                            <div class="file-tree-item" onclick="selectFile('audit_ledger.py', this)">
+                                <i data-lucide="file-code" style="color: #ef4444;"></i>
+                                <span>audit_ledger.py</span>
+                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
+                            </div>
+                            <div class="file-tree-item" onclick="selectFile('conflict.py', this)">
+                                <i data-lucide="file-code" style="color: #ef4444;"></i>
+                                <span>conflict.py</span>
+                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
+                            </div>
                         </div>
                     </div>
 
@@ -835,6 +855,44 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
                     { name: "summarize_document(meeting_id)", purpose: "Builds a concise summary of a document's passages using the local LLM." }
                 ],
                 integration: "Spins up a background daemon thread on server startup to summarize any unsummarized documents."
+            },
+            "ollama_runner.py": {
+                title: "ollama_runner.py",
+                desc: "Ensures that the local Ollama backend is running by checking port connectivity and automatically launching the daemon service in the background on startup, ingest, or query events.",
+                roles: "Ollama Daemon Auto-Runner",
+                functions: [
+                    { name: "ensure_ollama_running()", purpose: "Checks if Ollama is listening and dynamically spawns it in a cross-platform background thread if not active." }
+                ],
+                integration: "Called during startup (main.py), embedding (embedder.py), and LLM generation (llm_client.py)."
+            },
+            "lineage.py": {
+                title: "lineage.py",
+                desc: "Manages document relationship links and generates causal lineage edges.",
+                roles: "Causal Relation Edge Builder",
+                functions: [
+                    { name: "create_edge(src, tgt, type)", purpose: "Creates relation edges in database." },
+                    { name: "auto_edges()", purpose: "Dynamically maps matching properties into lineage edges." }
+                ],
+                integration: "Called by startup triggers and API endpoints to supply nodes to the Cytoscape.js visualizer."
+            },
+            "audit_ledger.py": {
+                title: "audit_ledger.py",
+                desc: "Logs queries, upload actions, and system updates to an immutable, cryptographically chained log using SHA-256 block hashing.",
+                roles: "Immutable Activity Auditor",
+                functions: [
+                    { name: "log_audit(act, det, usr)", purpose: "Calculates SHA-256 block hash linked to the previous block and logs audit info." },
+                    { name: "verify_audit_ledger()", purpose: "Verifies chain integrity by recalculating and checking hashes recursively." }
+                ],
+                integration: "Wired into main upload and search API route parameters."
+            },
+            "conflict.py": {
+                title: "conflict.py",
+                desc: "Performs overlap analysis on new ingestion text chunks against database records to detect possible duplicate entries.",
+                roles: "Ingestion Collision Checker",
+                functions: [
+                    { name: "detect_conflicts(text)", purpose: "Calculates semantic cosine similarity and chunk overlap to report potential duplicates." }
+                ],
+                integration: "Called during document uploads inside main.py to raise warning alerts."
             },
             "main.py": {
                 title: "main.py",
