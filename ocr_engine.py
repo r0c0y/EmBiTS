@@ -30,6 +30,12 @@ try:
 except ImportError:
     HAS_LLAMACPP = False
 
+try:
+    import pymupdf4llm
+    HAS_PYMUPDF4LLM = True
+except ImportError:
+    HAS_PYMUPDF4LLM = False
+
 from preprocess import preprocess_image
 
 
@@ -90,6 +96,69 @@ class OCREngine(ABC):
                 metadata={"page_count": 1}
             )
         return OCRResult(markdown="", text="", engine=self.name)
+
+
+class PyMuPDF4LLMEngine(OCREngine):
+    name = "pymupdf4llm"
+    priority = 100
+    requires_gpu = False
+
+    def __init__(self):
+        self._available = HAS_PYMUPDF4LLM
+
+    def is_available(self) -> bool:
+        return self._available
+
+    def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
+        # Fall back to image-specific engines for pure image files
+        return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name)
+
+    def process_pdf(self, file_path: str, page_range: Optional[List[int]] = None) -> List[OCRPageResult]:
+        if not self._available:
+            return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name)]
+
+        try:
+            # page_chunks=True returns structured page-wise layout markdown and page boxes
+            chunks = pymupdf4llm.to_markdown(file_path, page_chunks=True)
+            pages = []
+            page_nums = set(page_range) if page_range else set()
+            for i, chunk in enumerate(chunks):
+                # pymupdf4llm pages are 0-indexed in metadata, but let's map it safely
+                meta = chunk.get("metadata", {})
+                page_num = meta.get("page", i) + 1
+                if page_nums and page_num not in page_nums:
+                    continue
+                
+                text = chunk.get("text", "")
+                markdown = text
+                
+                # Extract page layout boxes
+                blocks = []
+                for box in meta.get("page_boxes", []):
+                    if isinstance(box, (list, tuple)) and len(box) >= 4:
+                        blocks.append({
+                            "x": box[0],
+                            "y": box[1],
+                            "width": box[2] - box[0],
+                            "height": box[3] - box[1],
+                            "text": box[4] if len(box) > 4 else "",
+                            "type": box[6] if len(box) > 6 else "text"
+                        })
+                
+                pages.append(OCRPageResult(
+                    page_num=page_num,
+                    markdown=markdown,
+                    text=text,
+                    engine=self.name,
+                    blocks=blocks,
+                    metadata={"tables": len(chunk.get("tables", [])), "images": len(chunk.get("images", []))}
+                ))
+            if not pages:
+                md = pymupdf4llm.to_markdown(file_path)
+                pages = [OCRPageResult(page_num=1, markdown=md, text=md, engine=self.name)]
+            return pages
+        except Exception as e:
+            return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name, metadata={"error": str(e)})]
 
 
 class LiteParseEngine(OCREngine):
@@ -271,6 +340,7 @@ class RapidOCREngine(OCREngine):
 class OCRManager:
     def __init__(self):
         self.engines: List[OCREngine] = [
+            PyMuPDF4LLMEngine(),
             LiteParseEngine(),
             RapidOCREngine(),
         ]
@@ -288,6 +358,7 @@ class OCRManager:
             "preferred": self.get_best_engine().name if self.get_best_engine() else None,
             "rapidocr": {"available": HAS_RAPIDOCR},
             "liteparse": {"available": HAS_LITEPARSE},
+            "pymupdf4llm": {"available": HAS_PYMUPDF4LLM},
         }
 
     def process_with_fallback(self, file_path: str, ext: str) -> OCRResult:
