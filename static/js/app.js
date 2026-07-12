@@ -313,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const itms = input._msItems;
             let h = itms.map(item => {
                 const val = item.id || item;
-                const rawDisplay = item.title || (typeof item === 'string' ? item : item.id || '');
+                const rawDisplay = item.title || item.name || (typeof item === 'string' ? item : item.id || '');
                 const display = (rawDisplay || '').replace(/_/g, " ");
                 const isChecked = sel.includes(val);
                 return `
@@ -345,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const displayList = input._msItems
                             .filter(item => input._msSelected.includes(item.id || item))
                             .map(item => {
-                                const rawDisplay = item.title || (typeof item === 'string' ? item : item.id || '');
+                                const rawDisplay = item.title || item.name || (typeof item === 'string' ? item : item.id || '');
                                 return (rawDisplay || '').replace(/_/g, " ");
                             });
                         input.value = displayList.join(", ");
@@ -390,21 +390,24 @@ document.addEventListener("DOMContentLoaded", () => {
     let projAll = [];
     const refreshProjectDropdowns = () => {
         fetch("/api/projects").then(r => r.json()).then(d => {
-            const dbProjects = d.projects.map(p => p.name || p.id);
-            dbProjects.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }));
+            const dbProjects = d.projects;
+            dbProjects.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id, undefined, { sensitivity: 'base', numeric: true }));
             
+            const dbProjIds = dbProjects.map(p => p.id);
             for (let i = sessionCustomProjects.length - 1; i >= 0; i--) {
-                if (dbProjects.includes(sessionCustomProjects[i])) {
+                if (dbProjIds.includes(sessionCustomProjects[i])) {
                     sessionCustomProjects.splice(i, 1);
                 }
             }
             
-            projAll = [...new Set([...dbProjects, ...sessionCustomProjects])];
+            const customObjects = sessionCustomProjects.map(p => ({ id: p, name: p.replace(/_/g, " ") }));
+            const allProjObjects = [...dbProjects, ...customObjects];
+            projAll = allProjObjects.map(p => p.name || p.id);
             
             const filterInput = document.getElementById("project-filter");
             const filterMenu = document.getElementById("search-proj-menu");
             if (filterInput && filterMenu) {
-                mkMultiSelect(filterInput, filterMenu, dbProjects, "All Projects", (selectedProjIds) => {
+                mkMultiSelect(filterInput, filterMenu, allProjObjects, "All Projects", (selectedProjIds) => {
                     updateDocumentFilter(selectedProjIds);
                 });
             }
