@@ -12,16 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        try {
-            const auth = JSON.parse(localStorage.getItem("scl_auth"));
-            if (!auth || auth.role !== "admin") {
-                window.location.href = "/";
-            }
-        } catch(e) {
-            window.location.href = "/";
-        }
-    </script>
+
 </head>
 <body>
 <div class="admin-container">

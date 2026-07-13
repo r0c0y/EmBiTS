@@ -202,6 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const creds = JSON.parse(localStorage.getItem("scl_auth") || "{}");
         const key = creds.api_key || "";
         const filterSelect = document.getElementById("map-project-filter");
+        const container = document.getElementById("cy-admin-container");
         
         if (!mapProjectsLoaded && filterSelect) {
             filterSelect.innerHTML = '<option value="">All Projects</option>';
@@ -218,13 +219,21 @@ document.addEventListener("DOMContentLoaded", () => {
             filterSelect.addEventListener("change", () => loadKnowledgeMap());
         }
         
+        // Ensure container has proper dimensions before loading
+        if (container) {
+            container.style.minHeight = '500px';
+            container.style.width = '100%';
+            container.innerHTML = '<p class="text-muted" style="padding:2rem;text-align:center">Loading knowledge map...</p>';
+        }
+        
         const projVal = filterSelect ? filterSelect.value : "";
         const url = `/admin/knowledge-map` + (projVal ? `?project=${encodeURIComponent(projVal)}` : '');
         const data = await fetch(url, {
             headers: { "Authorization": `Bearer ${key}` }
         }).then(r => r.json());
         
-        renderAdminGraph(data);
+        // Wait a frame for DOM layout
+        setTimeout(() => renderAdminGraph(data), 100);
     }
 
     function renderAdminGraph(data) {
@@ -274,7 +283,22 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
         
+        // Add project-to-document edges for all projects,
+        // including creating project nodes for any project_id referenced in documents
+        // that wasn't in the initial projects list.
         const nodeIds = new Set(elements.map(e => e.data.id));
+        const docProjects = new Set(documents.filter(d => d.project_id && d.project_id !== 'Unknown').map(d => d.project_id));
+        docProjects.forEach(p => {
+            const src = 'proj-' + p;
+            if (!nodeIds.has(src)) {
+                const label = p.replace(/_/g, ' ');
+                elements.push({
+                    group: 'nodes',
+                    data: { id: src, label: label.length > 20 ? label.substring(0, 18) + '…' : label, type: 'project' }
+                });
+                nodeIds.add(src);
+            }
+        });
         
         documents.forEach(d => {
             if (d.project_id && d.project_id !== "Unknown") {
@@ -377,8 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     style: {
                         'border-color': '#10b981',
                         'border-width': 2,
-                        'shape': 'round-rectangle',
-                        'cursor': 'pointer'
+                        'shape': 'round-rectangle'
                     }
                 },
                 {

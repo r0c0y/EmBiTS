@@ -53,4 +53,5 @@ else:
             p = t
         conn = sqlite3.connect(p, timeout=10.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON;")
         return conn

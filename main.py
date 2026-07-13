@@ -32,11 +32,6 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.on_event("startup")
 def startup():
-    try:
-        from ollama_runner import ensure_ollama_running
-        ensure_ollama_running()
-    except Exception:
-        pass
     init_db()
     auto_edges()
     import threading
@@ -60,14 +55,14 @@ async def get_documents(project: str = None):
     if project:
         projs = [p.strip() for p in project.split(",") if p.strip()]
         if len(projs) == 1:
-            c.execute("SELECT id, title FROM meetings WHERE project_id = ? ORDER BY title ASC", (projs[0],))
+            c.execute("SELECT id, title, project_id FROM meetings WHERE project_id = ? ORDER BY title ASC", (projs[0],))
         elif len(projs) > 1:
             placeholders = ",".join("?" for _ in projs)
-            c.execute(f"SELECT id, title FROM meetings WHERE project_id IN ({placeholders}) ORDER BY title ASC", projs)
+            c.execute(f"SELECT id, title, project_id FROM meetings WHERE project_id IN ({placeholders}) ORDER BY title ASC", projs)
         else:
-            c.execute("SELECT id, title FROM meetings ORDER BY title ASC")
+            c.execute("SELECT id, title, project_id FROM meetings ORDER BY title ASC")
     else:
-        c.execute("SELECT id, title FROM meetings ORDER BY title ASC")
+        c.execute("SELECT id, title, project_id FROM meetings ORDER BY title ASC")
     rows = c.fetchall(); conn.close()
     return {"documents": [dict(r) for r in rows]}
 
@@ -85,10 +80,14 @@ async def health():
 async def get_projects():
     conn = get_db_connection(); c = conn.cursor()
     c.execute("SELECT DISTINCT project_id FROM meetings WHERE project_id IS NOT NULL ORDER BY project_id;")
-    projects = [{"id": r["project_id"], "name": r["project_id"].replace("_", " "), "description": r["project_id"]} for r in c.fetchall()]
+    projects = [{"id": r["project_id"], "name": (r["project_id"] or "").replace("_", " "), "description": r["project_id"]} for r in c.fetchall()]
     c.execute("SELECT id, title, date, lot_id, project_id FROM meetings;")
     docs = [dict(r) for r in c.fetchall()]
-    lots = list({d["lot_id"]: {"id": d["lot_id"], "name": d["lot_id"].replace("-"," "), "date": d["date"]} for d in docs}.values())
+    lots = []
+    for d in docs:
+        lid = d.get("lot_id")
+        if lid:
+            lots.append({"id": lid, "name": lid.replace("-"," "), "date": d.get("date") or ""})
     conn.close()
     return {"projects": projects, "lots": lots}
 
@@ -157,6 +156,14 @@ async def signin(email: str = Form(...), password: str = Form(...)):
 @app.post("/api/search")
 async def search(query: str = Form(...), project: str = Form(None), document: str = Form(None), date_from: str = Form(None), date_to: str = Form(None), user: str = Form("Unknown"), user_dept: str = Form("General"), auth=Depends(require_auth)):
     if not query.strip(): raise HTTPException(400, "Query cannot be empty.")
+    
+    # Auto-start Ollama if it is not running
+    try:
+        from ollama_runner import ensure_ollama_running
+        ensure_ollama_running()
+    except Exception:
+        pass
+
     log_audit(user, user_dept, "QUERY", f"Searched: '{query}' (Project: {project}, Doc: {document})")
     try: return execute_trace(query, project=project, doc_id=document, date_from=date_from, date_to=date_to)
     except Exception as e: raise HTTPException(500, str(e))
@@ -166,7 +173,7 @@ class TranslationRequest(BaseModel):
     target_lang: str
 
 @app.post("/api/translate")
-async def translate(req: TranslationRequest, auth=Depends(require_auth)):
+async def translate(req: TranslationRequest):
     if not req.text.strip():
         return {"status": "success", "translated_text": ""}
     if req.target_lang not in ["Hindi"]:
@@ -180,6 +187,13 @@ async def translate(req: TranslationRequest, auth=Depends(require_auth)):
 
 @app.post("/api/upload")
 async def upload_document(file: UploadFile = File(...), project_id: str = Form("Unknown"), user: str = Form("Unknown"), user_dept: str = Form("General"), background_tasks: BackgroundTasks = None, auth=Depends(require_auth)):
+    # Auto-start Ollama if it is not running
+    try:
+        from ollama_runner import ensure_ollama_running
+        ensure_ollama_running()
+    except Exception:
+        pass
+
     allowed = {".txt",".pdf",".docx",".xlsx",".xls",".pptx",".png",".jpg",".jpeg",".tiff",".bmp",".csv",".md",".json"}
     ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in allowed:
@@ -187,7 +201,7 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
     raw = await file.read()
     size_kb = len(raw) / 1024
     size_label = f"{size_kb:.1f} KB" if size_kb < 1024 else f"{size_kb/1024:.2f} MB"
-    import hashlib, io
+    import hashlib, io, os, tempfile
     chash = hashlib.sha256(raw).hexdigest()
     conn = get_db_connection(); c = conn.cursor()
     c.execute("SELECT id FROM meetings WHERE project_id = ? AND (file_path = ? OR content_hash = ?)", (project_id, file.filename, chash))
@@ -195,79 +209,39 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
     if row:
         conn.close()
         return {"status": "duplicate", "message": "Duplicate document in this project.", "document_id": row[0]}
-    try:
-        result = ingest(io.BytesIO(raw), file.filename, size=len(raw), base_dir=BASE_DIR)
-    except ValueError as e:
-        conn.close()
-        raise HTTPException(400, str(e))
+
     doc_id = f"DOC-{uuid.uuid4().hex[:8].upper()}"
-    doc_date = result["detected_date"] or datetime.now().strftime("%Y-%m-%d")
-    lot_id = f"LOT-{doc_date[:7]}-{doc_id[-4:]}"
     safe_title = "".join(c for c in file.filename.rsplit(".", 1)[0] if c.isalnum() or c in " _-").strip() or "Untitled"
 
-    # Insert row first so we have doc_id for structured OCR storage
-    c.execute("INSERT INTO meetings VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (doc_id, safe_title, doc_date, lot_id, project_id, file.filename, len(raw),
-         result["text"], result["source_type"],
+    c.execute("INSERT INTO meetings (id, title, date, lot_id, project_id, file_path, file_size_bytes, transcript_text, source_type, content_hash, created_at, ocr_quality, corrections_count, ocr_json, ocr_markdown, ocr_engine, page_count, uploaded_by, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (doc_id, safe_title, None, None, project_id, file.filename, len(raw),
+         None, ext.lstrip("."),
          chash, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-         result.get("ocr_quality", "auto"), 0,
-         None, None, result.get("ocr_engine"), result.get("page_count", 1), user))
+         "pending", 0,
+         None, None, None, 0, user, "pending"))
+    conn.commit(); conn.close()
 
-    # Store structured OCR sidecar files with real doc_id
-    ocr_result_obj = result.get("ocr_result")
-    if ocr_result_obj is not None:
+    tmp_path = None
+    try:
+        fd, tmp_path = tempfile.mkstemp(suffix=ext)
+        with os.fdopen(fd, "wb") as f:
+            f.write(raw)
+    except Exception:
+        tmp_path = None
+
+    if background_tasks and tmp_path:
+        background_tasks.add_task(
+            _process_upload_background,
+            tmp_path, ext, file.filename, doc_id, project_id,
+            user, user_dept, size_label
+        )
+    elif tmp_path:
         try:
-            from ocr_storage import store_ocr_result
-            stored = store_ocr_result(
-                base_dir=BASE_DIR,
-                doc_id=doc_id,
-                filename=file.filename,
-                ocr_result=ocr_result_obj,
-                engine_name=result.get("ocr_engine", "unknown"),
-                page_count=result.get("page_count", 1),
-                detected_date=doc_date,
-            )
-            c.execute("UPDATE meetings SET ocr_json=?, ocr_markdown=?, ocr_engine=?, page_count=? WHERE id=?",
-                (stored.get("ocr_json"), stored.get("ocr_markdown"), stored.get("ocr_engine"), stored.get("ocr_page_count"), doc_id))
+            _process_upload_background(tmp_path, ext, file.filename, doc_id, project_id, user, user_dept, size_label)
         except Exception:
             pass
 
-    # PageIndex: reasoning-based page-by-page chunk indexing
-    ocr_res = result.get("ocr_result")
-    chunks_count = 0
-    if ocr_res and hasattr(ocr_res, "pages") and ocr_res.pages:
-        for page in ocr_res.pages:
-            page_num = page.page_num or 1
-            page_chunks = __import__("ingestion").chunk_text(page.text)
-            for ch in page_chunks:
-                if ch.strip():
-                    c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                              (f"{doc_id}-{chunks_count}", doc_id, chunks_count, ch, page_num))
-                    chunks_count += 1
-    else:
-        chunks = __import__("ingestion").chunk_text(result["text"])
-        chunks_count = len(chunks)
-        for i, ch in enumerate(chunks):
-            c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)",
-                      (f"{doc_id}-{i}", doc_id, i, ch, 1))
-    conn.commit(); conn.close()
-
-    # Persist original for preview
-    try:
-        dest_dir = os.path.join(BASE_DIR, "static", "originals")
-        os.makedirs(dest_dir, exist_ok=True)
-        dest = os.path.join(dest_dir, f"{doc_id}_{file.filename}")
-        with open(dest, "wb") as f:
-            f.write(raw)
-    except Exception:
-        pass
-
-    log_audit(user, user_dept, "UPLOAD", f"Uploaded: {file.filename} ({size_label}, {chunks_count} chunks, engine={result.get('ocr_engine','native')})")
-    auto_edges()
-    if background_tasks:
-        from summarizer import process_new_document_background
-        background_tasks.add_task(process_new_document_background, doc_id, project_id, result["text"], safe_title)
-    return {"status": "success", "filename": file.filename, "document_id": doc_id, "chunks": chunks_count}
+    return {"status": "success", "filename": file.filename, "document_id": doc_id, "state": "processing"}
 
 @app.get("/api/document/{doc_id}")
 async def get_document(doc_id: str):
@@ -461,6 +435,76 @@ async def api_delete_edge(from_node_id: str = Form(...), to_node_id: str = Form(
     try: return delete_edge(from_node_id, to_node_id, user, user_dept)
     except Exception as e: raise HTTPException(400, str(e))
 
+def _process_upload_background(tmp_path: str, ext: str, filename: str, doc_id: str, project_id: str, user: str, user_dept: str, size_label: str):
+    """Heavy OCR + indexing for a newly uploaded document. Runs in background after the upload response is returned."""
+    import os
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Copy original file to static/originals BEFORE processing (tmp might get cleaned up)
+    dest_dir = os.path.join(base_dir, "static", "originals")
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_path = os.path.join(dest_dir, f"{doc_id}_{filename}")
+    try:
+        import shutil
+        shutil.copy2(tmp_path, dest_path)
+    except Exception:
+        pass
+    
+    try:
+        result = ingest(tmp_path, filename, size=0, base_dir=base_dir)
+    except Exception as e:
+        conn = get_db_connection(); c = conn.cursor()
+        try:
+            c.execute("UPDATE meetings SET status='failed', transcript_text=? WHERE id=?", (f"Ingestion error: {e}", doc_id))
+            conn.commit()
+        except: pass
+        conn.close()
+        return
+    finally:
+        try: os.unlink(tmp_path)
+        except Exception: pass
+
+    doc_date = result.get("detected_date") or datetime.now().strftime("%Y-%m-%d")
+    lot_id = f"LOT-{doc_date[:7]}-{doc_id[-4:]}"
+    text = result.get("text", "") or ""
+    ocr_quality = result.get("ocr_quality", "auto")
+    engine_name = result.get("ocr_engine", "native")
+    page_count = result.get("page_count", 1) or 1
+
+    conn = get_db_connection(); c = conn.cursor()
+    c.execute("UPDATE meetings SET status='completed', date=?, lot_id=?, transcript_text=?, source_type=?, created_at=?, ocr_quality=?, ocr_json=?, ocr_markdown=?, ocr_engine=?, page_count=? WHERE id=?",
+        (doc_date, lot_id, text, result.get("source_type"), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ocr_quality, None, None, engine_name, page_count, doc_id))
+
+    ocr_result_obj = result.get("ocr_result")
+    if ocr_result_obj is not None:
+        try:
+            from ocr_storage import store_ocr_result
+            stored = store_ocr_result(base_dir=base_dir, doc_id=doc_id, filename=filename, ocr_result=ocr_result_obj, engine_name=engine_name, page_count=page_count, detected_date=doc_date)
+            c.execute("UPDATE meetings SET ocr_json=?, ocr_markdown=?, ocr_engine=?, page_count=? WHERE id=?", (stored.get("ocr_json"), stored.get("ocr_markdown"), stored.get("ocr_engine"), stored.get("ocr_page_count"), doc_id))
+        except Exception:
+            pass
+
+    chunks_count = 0
+    if ocr_result_obj and hasattr(ocr_result_obj, "pages") and ocr_result_obj.pages:
+        for page in ocr_result_obj.pages:
+            page_num = page.page_num or 1
+            for ch in __import__("ingestion").chunk_text(page.text):
+                if ch.strip():
+                    c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)", (f"{doc_id}-{chunks_count}", doc_id, chunks_count, ch, page_num))
+                    chunks_count += 1
+    else:
+        for i, ch in enumerate(__import__("ingestion").chunk_text(text)):
+            if ch.strip():
+                c.execute("INSERT INTO chunks (id, meeting_id, chunk_index, chunk_text, page_number) VALUES (?,?,?,?,?)", (f"{doc_id}-{i}", doc_id, i, ch, 1))
+                chunks_count += 1
+    conn.commit(); conn.close()
+
+    log_audit(user, user_dept, "UPLOAD", f"Background complete: {filename} ({size_label}, {chunks_count} chunks, engine={engine_name})")
+    auto_edges()
+    from summarizer import process_new_document_background
+    process_new_document_background(doc_id, project_id, text, "".join(c for c in filename.rsplit(".", 1)[0] if c.isalnum() or c in " _-").strip() or "Untitled")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    reload_enabled = os.environ.get("SCL_RELOAD", "").lower() in ("1", "true", "yes")
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=reload_enabled)

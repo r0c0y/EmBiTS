@@ -45,7 +45,7 @@ def build_existing_hierarchical_summaries():
         for r in rows:
             generate_hierarchical_tree_task(r["id"], r["project_id"], r["transcript_text"], r["title"])
     except Exception as e:
-        print(f"Error building existing summaries: {e}")
+        pass
 
 def process_new_document_background(doc_id: str, project_id: str, text: str, title: str):
     """Run all background tasks for a newly uploaded document."""

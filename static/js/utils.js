@@ -87,6 +87,7 @@ window.nextOCRPage = () => {
     }
 };
 
+const escapeHTML = (str) => (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const renderViewerContent = () => {
     const d = window._currentDoc;
     if (!d) return;
@@ -94,20 +95,73 @@ const renderViewerContent = () => {
     if (!contentContainer) return;
     
     const fileExt = (d.source_type || d.file_path || d.title || "").split('.').pop().toLowerCase();
-    const escapeHTML = (str) => (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     
     if (window._viewerMode === 'ocr') {
         const pages = window._currentDocPages || [];
         const hasPages = pages.length > 0;
+        const nativeFormats = ['txt', 'csv', 'md', 'json', 'docx', 'xlsx', 'xls', 'pptx'];
+        const isNativeText = nativeFormats.includes(fileExt);
+        
+        const hasOcrText = !!(d.transcript_text || (hasPages && pages[0]?.text));
+        
+        if (!hasOcrText && !hasPages) {
+            contentContainer.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:40px; text-align:center; color:var(--text-muted);">
+                    <div style="font-size:48px; margin-bottom:16px; opacity:0.5;">📄</div>
+                    <h3 style="margin:0 0 8px; color:var(--text);">No Extracted Text</h3>
+                    <p style="max-width:400px; line-height:1.5; font-size:13px;">
+                        This document has no extracted text. Check the original file view.
+                    </p>
+                    <button class="view-doc-btn" style="margin-top:12px;" onclick="window._viewerMode='original'; renderViewerContent(); document.getElementById('viewer-ocr').innerText='👁 Original';">Switch to Original View</button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Native text formats (txt/docx/xlsx/etc.): show formatted text directly, no OCR spinner
+        if (d.transcript_text && !hasPages && isNativeText) {
+            const formatted = parseMD(d.transcript_text).replace(/<pre>/g, '<div style="font-family:monospace;background:var(--bg);padding:16px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;white-space:pre-wrap;word-wrap:break-word;line-height:1.6;font-size:13px;">').replace(/<\/pre>/g, '</div>');
+            contentContainer.innerHTML = `
+                <div style="display: flex; flex-direction: column; overflow: hidden; height: 100%; width: 100%; box-sizing: border-box;">
+                    <div style="flex: 1; overflow-y: auto; padding: 24px; box-sizing: border-box;">
+                        <div style="font-size:13px; line-height:1.7; color:var(--text);">
+                            ${formatted}
+                        </div>
+                    </div>
+                </div>
+            `;
+            const el = contentContainer.querySelector('div:last-child');
+            if (el) { renderKatex(el); renderMermaid(el); }
+            return;
+        }
+        
+        // Has text but per-page OCR data not ready yet (image/PDF still processing)
+        if (hasOcrText && !hasPages) {
+            contentContainer.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:40px; text-align:center; color:var(--text-muted);">
+                    <div class="spinner" style="width:32px;height:32px;border-width:3px;margin-bottom:16px;"></div>
+                    <h3 style="margin:0 0 8px; color:var(--text);">OCR Processing</h3>
+                    <p style="max-width:400px; line-height:1.5; font-size:13px;">
+                        The OCR data is being prepared. Page-level content will appear here once processing is complete.
+                        You can view the extracted raw text in the meantime.
+                    </p>
+                    <div style="margin-top:16px; padding:20px; background:var(--bg); border-radius:8px; max-width:600px; width:100%; text-align:left; max-height:300px; overflow-y:auto; font-family:monospace; font-size:12px; line-height:1.5; white-space:pre-wrap; border:1px solid var(--border);">
+                        ${(d.transcript_text || 'No text content available.').substring(0, 2000)}${(d.transcript_text || '').length > 2000 ? '...' : ''}
+                    </div>
+                </div>
+            `;
+            return;
+        }
         
         let currentText = d.transcript_text || "";
         let paginatorHTML = '';
+        let pageContentHTML = '';
         
         if (hasPages) {
             const pageIndex = Math.min(window._viewerCurrentPage, pages.length - 1);
             const page = pages[pageIndex];
             if (page) {
-                currentText = page.markdown || page.text || "";
+                pageContentHTML = highlightKW(parseMD(page.markdown || page.text || ""), window._currentDocSearchText || "");
             }
             if (pages.length > 1) {
                 paginatorHTML = `
@@ -118,12 +172,13 @@ const renderViewerContent = () => {
                     </div>
                 `;
             }
+        } else {
+            pageContentHTML = highlightKW(parseMD(currentText), window._currentDocSearchText || "");
         }
         
         contentContainer.innerHTML = `
             <div style="display: flex; flex-direction: column; overflow: hidden; height: 100%; width: 100%; box-sizing: border-box;">
                 <div style="flex: 1; overflow-y: auto; padding: 20px; box-sizing: border-box; background: #0c101d;">
-                    <!-- A4 Premium Paper Layout Container -->
                     <div class="ocr-paper-page" style="
                         background: #ffffff;
                         color: #1f2937;
@@ -139,81 +194,35 @@ const renderViewerContent = () => {
                         line-height: 1.7;
                         text-align: left;
                     ">
-                        <!-- Custom CSS overrides specifically for paper layout content -->
                         <style>
                             .ocr-paper-page h1, .ocr-paper-page h2, .ocr-paper-page h3, .ocr-paper-page h4 {
-                                color: #111827 !important;
-                                font-weight: 700;
-                                margin-top: 24px;
-                                margin-bottom: 12px;
-                                border-bottom: 1px solid #e5e7eb;
-                                padding-bottom: 6px;
+                                color: #111827 !important; font-weight: 700; margin-top: 24px; margin-bottom: 12px;
+                                border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;
                             }
                             .ocr-paper-page h1 { font-size: 24px; }
                             .ocr-paper-page h2 { font-size: 20px; }
                             .ocr-paper-page h3 { font-size: 16px; }
-                            .ocr-paper-page p {
-                                margin-bottom: 16px;
-                                color: #374151 !important;
-                            }
-                            .ocr-paper-page ul, .ocr-paper-page ol {
-                                margin-bottom: 16px;
-                                padding-left: 24px;
-                                color: #374151 !important;
-                            }
-                            .ocr-paper-page li {
-                                margin-bottom: 6px;
-                            }
+                            .ocr-paper-page p { margin-bottom: 16px; color: #374151 !important; }
+                            .ocr-paper-page ul, .ocr-paper-page ol { margin-bottom: 16px; padding-left: 24px; color: #374151 !important; }
+                            .ocr-paper-page li { margin-bottom: 6px; }
                             .ocr-paper-page table {
-                                width: 100% !important;
-                                border-collapse: collapse !important;
-                                margin: 20px 0 !important;
-                                font-size: 13px !important;
-                                background: #f9fafb !important;
-                                border: 1px solid #d1d5db !important;
+                                width: 100% !important; border-collapse: collapse !important; margin: 20px 0 !important;
+                                font-size: 13px !important; background: #f9fafb !important; border: 1px solid #d1d5db !important;
                             }
                             .ocr-paper-page th, .ocr-paper-page td {
-                                padding: 10px 14px !important;
-                                border: 1px solid #d1d5db !important;
-                                color: #1f2937 !important;
+                                padding: 10px 14px !important; border: 1px solid #d1d5db !important; color: #1f2937 !important;
                             }
-                            .ocr-paper-page th {
-                                background: #f3f4f6 !important;
-                                font-weight: 600 !important;
-                                color: #111827 !important;
-                            }
-                            .ocr-paper-page pre {
-                                background: #f3f4f6 !important;
-                                border: 1px solid #e5e7eb !important;
-                                padding: 14px !important;
-                                border-radius: 6px !important;
-                                overflow-x: auto !important;
-                                color: #1f2937 !important;
-                            }
-                            .ocr-paper-page code {
-                                font-family: monospace !important;
-                                font-size: 13px !important;
-                                color: #d97706 !important;
-                                background: #f3f4f6 !important;
-                                padding: 2px 4px !important;
-                                border-radius: 4px !important;
-                            }
-                            .ocr-paper-page blockquote {
-                                border-left: 4px solid #3b82f6 !important;
-                                padding-left: 16px !important;
-                                margin: 16px 0 !important;
-                                color: #4b5563 !important;
-                                font-style: italic !important;
-                            }
-                            /* Keep highlighted keyword readable on white paper */
-                            .ocr-paper-page .match {
-                                background: #fef08a !important;
-                                color: #000000 !important;
-                                border-radius: 2px !important;
-                                padding: 0 2px !important;
-                            }
+                            .ocr-paper-page th { background: #f3f4f6 !important; font-weight: 600 !important; color: #111827 !important; }
+                            .ocr-paper-page pre { background: #f3f4f6 !important; border: 1px solid #e5e7eb !important; padding: 14px !important; border-radius: 6px !important; overflow-x: auto !important; color: #1f2937 !important; }
+                            .ocr-paper-page code { font-family: monospace !important; font-size: 13px !important; color: #d97706 !important; background: #f3f4f6 !important; padding: 2px 4px !important; border-radius: 4px !important; }
+                            .ocr-paper-page blockquote { border-left: 4px solid #3b82f6 !important; padding-left: 16px !important; margin: 16px 0 !important; color: #4b5563 !important; font-style: italic !important; }
+                            .ocr-paper-page .match { background: #fef08a !important; color: #000000 !important; border-radius: 2px !important; padding: 0 2px !important; }
+                            .ocr-layout-table { display: table; width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            .ocr-layout-row { display: table-row; }
+                            .ocr-layout-cell { display: table-cell; border: 1px solid #d1d5db; padding: 10px 14px; vertical-align: top; font-size: 13px; background: #f9fafb; }
+                            .ocr-layout-col { position: relative; display: inline-block; vertical-align: top; }
                         </style>
-                        ${highlightKW(parseMD(currentText), window._currentDocSearchText || "")}
+                        ${pageContentHTML}
                     </div>
                 </div>
                 ${paginatorHTML}
@@ -279,7 +288,95 @@ const renderViewerContent = () => {
         }
     }
 };
-const renderDecisions=(decisions)=>{const c=document.getElementById("decisions-list");if(!c)return;if(!decisions||!decisions.length){c.innerHTML='';return}c.innerHTML=decisions.map(d=>`<div class="decision-item ${d.status.toLowerCase()}"><span class="dec-status">${d.status==='Approved'?'✓':d.status==='Failed'?'✗':'⚠'}</span><div class="dec-body"><span class="dec-title">${d.summary}</span><span class="dec-meta">${d.type} · ${d.meeting_title}</span></div></div>`).join('')};
+const getBBoxCenter = (bbox) => {
+    if (!bbox || !Array.isArray(bbox) || bbox.length < 4) return {cx: 0, cy: 0};
+    const pts = bbox.filter(p => p && Array.isArray(p) && p.length >= 2);
+    if (pts.length < 2) return {cx: 0, cy: 0};
+    const xs = pts.map(p => p[0]);
+    const ys = pts.map(p => p[1]);
+    return {cx: (Math.min(...xs) + Math.max(...xs)) / 2, cy: (Math.min(...ys) + Math.max(...ys)) / 2};
+};
+const detectTableFromBlocks = (blocks) => {
+    const rows = {};
+    const rowTolerance = 15;
+    for (const b of blocks) {
+        if (!b.bbox) continue;
+        const {cy} = getBBoxCenter(b.bbox);
+        const rowKey = Math.round(cy / rowTolerance);
+        if (!rows[rowKey]) rows[rowKey] = [];
+        rows[rowKey].push(b);
+    }
+    const rowKeys = Object.keys(rows).map(Number).sort((a,b) => a-b);
+    if (rowKeys.length < 2) return null;
+    const colCounts = rowKeys.map(k => rows[k].length);
+    const avgCols = colCounts.reduce((s,c) => s+c, 0) / colCounts.length;
+    if (avgCols < 2) return null;
+    const consistentRows = colCounts.filter(c => Math.abs(c - avgCols) <= 1).length;
+    if (consistentRows / rowKeys.length < 0.6) return null;
+    const sortedRows = rowKeys.map(k => {
+        return rows[k].sort((a,b) => {
+            const {cx: ax} = getBBoxCenter(a.bbox);
+            const {cx: bx} = getBBoxCenter(b.bbox);
+            return ax - bx;
+        });
+    });
+    return sortedRows;
+};
+const normalizeBlock = (b) => {
+    if (b.bbox) return b;
+    if (b.x !== undefined && b.y !== undefined && b.width !== undefined && b.height !== undefined) {
+        const x = b.x, y = b.y, w = b.width, h = b.height;
+        return {...b, bbox: [[x, y], [x+w, y], [x+w, y+h], [x, y+h]]};
+    }
+    return b;
+};
+const renderLayoutFromBlocks = (blocks, fallbackText) => {
+    if (blocks) blocks = blocks.map(normalizeBlock);
+    if (!blocks || blocks.length === 0) {
+        return highlightKW(parseMD(fallbackText || ""), window._currentDocSearchText || "");
+    }
+    const tableRows = detectTableFromBlocks(blocks);
+    if (tableRows) {
+        let html = '<div class="ocr-layout-table">';
+        for (let ri = 0; ri < tableRows.length; ri++) {
+            html += '<div class="ocr-layout-row">';
+            for (const cell of tableRows[ri]) {
+                const text = escapeHTML(cell.text || "");
+                html += `<div class="ocr-layout-cell">${text}</div>`;
+            }
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+    const pageW = 800;
+    const sorted = blocks.filter(b => b.bbox).sort((a,b) => {
+        const {cy: ay} = getBBoxCenter(a.bbox);
+        const {cy: by} = getBBoxCenter(b.bbox);
+        if (Math.abs(ay - by) > 20) return ay - by;
+        const {cx: ax} = getBBoxCenter(a.bbox);
+        const {cx: bx} = getBBoxCenter(b.bbox);
+        return ax - bx;
+    });
+    let html = '<div style="position:relative;">';
+    let prevY = 0;
+    for (const b of sorted) {
+        if (!b.bbox) continue;
+        const xs = b.bbox.map(p => p[0]);
+        const ys = b.bbox.map(p => p[1]);
+        const x = Math.min(...xs);
+        const y = Math.min(...ys);
+        const w = Math.max(...xs) - x;
+        const h = Math.max(...ys) - y;
+        const text = escapeHTML(b.text || "");
+        const marginTop = (y - prevY > 30) ? (y - prevY) : 6;
+        const leftPct = (x / pageW * 100).toFixed(1);
+        html += `<div style="position:relative; margin-top:${marginTop}px; margin-left:${leftPct}%; font-size:13px; line-height:1.5;">${text}</div>`;
+        prevY = y;
+    }
+    html += '</div>';
+    return html;
+};
 window.copyAI=()=>{const el=document.querySelector("#ai-answer .ai-text");if(!el)return;navigator.clipboard.writeText(el.innerText).then(()=>{const b=document.querySelector(".copy-btn");if(b){b.textContent="✓ Copied!";setTimeout(()=>b.textContent="📋 Copy Response",1500)}}).catch(()=>{})};
 const getHistoryKey=()=>{
     try {

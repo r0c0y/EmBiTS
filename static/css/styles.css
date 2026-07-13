@@ -1,4 +1,4 @@
-:root{--bg:#000;--surface:#0a0a0a;--border:#222;--text:#fff;--text-muted:#888;--card-bg:#0a0a0a;--sidebar-w:72px;--sidebar-c:72px}
+:root{--bg:#000;--surface:#0a0a0a;--border:#222;--text:#fff;--text-muted:#888;--card-bg:#0a0a0a;--sidebar-w:72px;--sidebar-w-hover:200px;--sidebar-c:72px}
 .light{--bg:#f5f5f5;--surface:#fff;--border:#ddd;--text:#111;--text-muted:#888;--card-bg:#fff}
 .theme-toggle{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .3s,border-color .3s,color .3s,transform .2s;overflow:hidden}
 .theme-toggle:hover{border-color:var(--text-muted);transform:scale(1.05)}
@@ -11,7 +11,8 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Outfit',sans-serif;color:var(--text)}
 body{background:var(--bg);display:flex;height:100vh;overflow:hidden}
 .app-container{display:flex;width:100%;height:100vh;overflow:hidden}
-.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 8px;display:flex;flex-direction:column;align-items:center;transition:width .2s ease;overflow-y:auto;white-space:nowrap;height:100vh}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 12px;display:flex;flex-direction:column;align-items:center;overflow:hidden;transition:width .2s ease;overflow-y:auto;white-space:nowrap;height:100vh;cursor:default}
+.sidebar:hover{width:var(--sidebar-w-hover)}
 
 /* Slim Sidebar CSS Tooltips */
 .sidebar [data-tooltip] {
@@ -52,6 +53,25 @@ body{background:var(--bg);display:flex;height:100vh;overflow:hidden}
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+}
+.nav-label {
+    display: none;
+    margin-left: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s 0.15s;
+}
+.sidebar:hover .nav-btn {
+    width: auto;
+    padding: 0 12px !important;
+    justify-content: flex-start;
+    gap: 0;
+}
+.sidebar:hover .nav-label {
+    display: inline;
+    opacity: 1;
 }
 .nav-btn{background:none;border:1px solid transparent;text-align:left;padding:10px 14px;font-size:13px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:8px;color:var(--text)}.nav-btn:hover,.nav-btn.active{background:var(--bg);border-color:var(--border)}
 .logo{display:flex;align-items:center;gap:8px;font-weight:700}

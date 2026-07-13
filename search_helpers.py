@@ -41,11 +41,17 @@ def get_meta_query_context(project=None, doc_id=None, date_from=None, date_to=No
         parts.append(f"Source [{idx}] (ID: {d['id']}):\nTitle: {d['title']} | Date: {d['date']} | Project: {d['project_id']} | Lot: {d['lot_id']}\nContent Summary: {summary}")
     return docs, "\n\n".join(parts)
 
-def get_context_graph(citations, query=""):
-    unique_ids = list({c["meeting_id"] for c in citations})
+def get_context_graph(citations, query="", selected_doc_ids=None):
+    unique_ids = set(c["meeting_id"] for c in citations)
+    if selected_doc_ids:
+        for s_id in selected_doc_ids:
+            if s_id.strip():
+                unique_ids.add(s_id.strip())
+                
     if not unique_ids:
         return {"nodes": [], "edges": [], "decisions": []}
         
+    unique_ids = list(unique_ids)
     conn = get_db_connection(); c = conn.cursor()
     placeholders = ",".join("?" for _ in unique_ids)
     c.execute(f"SELECT id, title, date, lot_id, project_id, file_path, transcript_text FROM meetings WHERE id IN ({placeholders})", unique_ids)
@@ -80,8 +86,10 @@ def get_context_graph(citations, query=""):
             if shared_query_terms:
                 rationale = f"Both discuss query topic(s): '{', '.join(shared_query_terms)}'"
                 if meta_reasons: rationale += " and share " + " & ".join(meta_reasons)
-                edges.append({"source": d1["id"], "target": d2["id"], "type": "query_context", "rationale": rationale})
+                label = ", ".join(sorted(shared_query_terms))[:20]
+                edges.append({"source": d1["id"], "target": d2["id"], "type": "query_context", "rationale": rationale, "label": label})
             elif meta_reasons:
-                edges.append({"source": d1["id"], "target": d2["id"], "type": "metadata", "rationale": "Linked via " + " & ".join(meta_reasons)})
+                label = meta_reasons[0].replace("same ", "")[:15]
+                edges.append({"source": d1["id"], "target": d2["id"], "type": "metadata", "rationale": "Linked via " + " & ".join(meta_reasons), "label": label})
                 
     return {"nodes": nodes, "edges": edges, "decisions": decisions}

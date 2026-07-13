@@ -26,7 +26,7 @@ def delete_edge(from_id, to_id, user, dept):
 
 def get_all_nodes():
     conn = get_db_connection(); c = conn.cursor()
-    c.execute("SELECT id, title, date, lot_id, department, file_path FROM meetings;")
+    c.execute("SELECT id, title, date, lot_id, project_id, file_path FROM meetings;")
     nodes = [dict(r) for r in c.fetchall()]
     conn.close()
     return nodes

@@ -79,12 +79,26 @@ def store_ocr_result(
     }
 
 
+_ocr_cache: Dict[str, tuple] = {}  # doc_id -> (timestamp, data)
+_OCR_CACHE_TTL = 300
+_MAX_CACHE = 50
+
 def load_ocr_json(base_dir: str, doc_id: str) -> Optional[Dict[str, Any]]:
+    now = datetime.now().timestamp()
+    cached = _ocr_cache.get(doc_id)
+    if cached and (now - cached[0]) < _OCR_CACHE_TTL:
+        return cached[1]
+
     path = os.path.join(base_dir, "storage", "ocr", f"{doc_id}.json")
     if not os.path.exists(path):
         return None
     try:
         with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        if len(_ocr_cache) >= _MAX_CACHE:
+            oldest = min(_ocr_cache.keys(), key=lambda k: _ocr_cache[k][0])
+            del _ocr_cache[oldest]
+        _ocr_cache[doc_id] = (now, data)
+        return data
     except Exception:
         return None

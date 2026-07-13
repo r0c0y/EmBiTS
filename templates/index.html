@@ -50,16 +50,16 @@
     <span class="logo-icon" style="font-size: 24px; color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56,189,248,0.4));">▲</span>
   </div>
   <nav class="nav-menu" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; flex: 1;">
-    <button class="nav-btn active" data-tab="search-tab" data-tooltip="Search & Trace"><re-icon icon="search" weight="filled" size="28"></re-icon></button>
-    <button class="nav-btn" data-tab="upload-tab" data-tooltip="Ingest"><re-icon icon="cloud-upload" size="28"></re-icon></button>
-    <button class="nav-btn" id="nav-registry-btn" data-tab="registry-tab" data-tooltip="Registry"><re-icon icon="database" size="28"></re-icon></button>
-    <button class="nav-btn" id="nav-audits-btn" data-tab="audit-tab" data-tooltip="Audits"><re-icon icon="shield" weight="filled" size="28"></re-icon></button>
-    <a href="/admin" id="admin-panel-link" class="nav-btn admin-only-link" data-tooltip="Admin Panel" style="display: none;"><re-icon icon="settings" weight="filled" size="28"></re-icon></a>
-    <a href="/docs/system" id="docs-panel-link" class="nav-btn admin-only-link" data-tooltip="System Docs" style="display: none;"><re-icon icon="book" weight="filled" size="28"></re-icon></a>
+    <button class="nav-btn active" data-tab="search-tab" data-tooltip="Search & Trace"><re-icon icon="search" weight="filled" size="28"></re-icon><span class="nav-label">Search &amp; Trace</span></button>
+    <button class="nav-btn" data-tab="upload-tab" data-tooltip="Ingest"><re-icon icon="cloud-upload" size="28"></re-icon><span class="nav-label">Ingest</span></button>
+    <button class="nav-btn" id="nav-registry-btn" data-tab="registry-tab" data-tooltip="Registry"><re-icon icon="database" size="28"></re-icon><span class="nav-label">Registry</span></button>
+    <button class="nav-btn" id="nav-audits-btn" data-tab="audit-tab" data-tooltip="Audits"><re-icon icon="shield" weight="filled" size="28"></re-icon><span class="nav-label">Audits</span></button>
+    <a href="/admin" id="admin-panel-link" class="nav-btn admin-only-link" data-tooltip="Admin Panel" style="display: none;"><re-icon icon="settings" weight="filled" size="28"></re-icon><span class="nav-label">Admin</span></a>
+    <a href="/docs/system" id="docs-panel-link" class="nav-btn admin-only-link" data-tooltip="System Docs" style="display: none;"><re-icon icon="book" weight="filled" size="28"></re-icon><span class="nav-label">Docs</span></a>
   </nav>
   
   <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border);">
-    <button class="nav-btn" id="btn-logout" data-tooltip="Sign Out" style="color: #ef4444 !important;"><re-icon icon="logout4" weight="filled" size="28"></re-icon></button>
+    <button class="nav-btn" id="btn-logout" data-tooltip="Sign Out" style="color: #ef4444 !important;"><re-icon icon="logout4" weight="filled" size="28"></re-icon><span class="nav-label" style="color:#ef4444">Sign Out</span></button>
     <div class="user-avatar-circle" id="user-avatar-initial" data-tooltip="User Profile" style="cursor: default; margin-top: 8px;">U</div>
   </div>
 </aside>

@@ -158,8 +158,12 @@ async def delete_project(project_id: str, auth=Depends(require_auth)):
                 except: pass
     # Delete chunk embeddings
     c.execute("DELETE FROM chunk_embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE meeting_id IN (SELECT id FROM meetings WHERE project_id = ?))", (project_id,))
+    # Delete lineage edges that reference any doc in this project
+    c.execute("DELETE FROM lineage WHERE from_node_id IN (SELECT id FROM meetings WHERE project_id = ?) OR to_node_id IN (SELECT id FROM meetings WHERE project_id = ?)", (project_id, project_id))
     # Delete meetings row. Cascading foreign keys will delete chunks and decisions!
     c.execute("DELETE FROM meetings WHERE project_id = ?", (project_id,))
+    # Purge orphaned hierarchical summaries for this project
+    c.execute("DELETE FROM hierarchical_summaries WHERE project_id = ?", (project_id,))
     conn.commit(); conn.close()
     return {"status": "success", "message": f"Project '{project_id}' deleted successfully."}
 
@@ -190,8 +194,13 @@ async def delete_document(doc_id: str, auth=Depends(require_auth)):
             
     # Delete chunk embeddings
     c.execute("DELETE FROM chunk_embeddings WHERE chunk_id IN (SELECT id FROM chunks WHERE meeting_id = ?)", (doc_id,))
+    # Delete lineage edges that reference this doc
+    c.execute("DELETE FROM lineage WHERE from_node_id = ? OR to_node_id = ?", (doc_id, doc_id))
     # Delete meetings row. Cascading foreign keys will delete chunks and decisions!
     c.execute("DELETE FROM meetings WHERE id = ?", (doc_id,))
+    # Purge orphaned hierarchical summaries that referenced this doc
+    # ponytail: hierarchical_summaries.source_ids is a serialized list — best-effort LIKE match instead of schema change
+    c.execute("DELETE FROM hierarchical_summaries WHERE source_ids LIKE ? OR source_ids = ?", (f"%{doc_id}%", doc_id))
     conn.commit(); conn.close()
     return {"status": "success", "message": f"Document '{doc_id}' in project '{project_id}' deleted successfully."}
 

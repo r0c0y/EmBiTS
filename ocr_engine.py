@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 
 from PIL import Image
 import pdfplumber
@@ -13,10 +13,10 @@ except ImportError:
     HAS_LITEPARSE = False
 
 try:
-    from rapidocr import RapidOCR
-    HAS_RAPIDOCR = True
+    import pytesseract
+    HAS_TESSERACT = True
 except ImportError:
-    HAS_RAPIDOCR = False
+    HAS_TESSERACT = False
 
 try:
     import pypdfium2
@@ -25,16 +25,10 @@ except ImportError:
     HAS_PYPDFIUM = False
 
 try:
-    from llama_cpp import Llama
-    HAS_LLAMACPP = True
+    import fitz
+    HAS_PYMUPDF = True
 except ImportError:
-    HAS_LLAMACPP = False
-
-try:
-    import pymupdf4llm
-    HAS_PYMUPDF4LLM = True
-except ImportError:
-    HAS_PYMUPDF4LLM = False
+    HAS_PYMUPDF = False
 
 from preprocess import preprocess_image
 
@@ -96,21 +90,109 @@ class OCREngine(ABC):
                 metadata={"page_count": 1}
             )
         return OCRResult(markdown="", text="", engine=self.name)
+import re
+
+def clean_shadow_text(text: str) -> str:
+    if not text:
+        return text
+    def replace_word(match):
+        word = match.group(0)
+        if len(word) >= 4:
+            word_upper = word.upper()
+            runs = []
+            current_char = ""
+            current_len = 0
+            for i, char in enumerate(word_upper):
+                if char == current_char:
+                    current_len += 1
+                else:
+                    if current_len > 0:
+                        runs.append((current_char, current_len, word[i - current_len : i]))
+                    current_char = char
+                    current_len = 1
+            if current_len > 0:
+                runs.append((current_char, current_len, word[len(word) - current_len :]))
+                
+            duplicated_count = sum(r[1] for r in runs if r[1] >= 2)
+            if duplicated_count / len(word) >= 0.75:
+                new_parts = []
+                for char, length, orig_substring in runs:
+                    new_len = max(1, length // 2)
+                    new_parts.append(orig_substring[:new_len])
+                return "".join(new_parts)
+        return word
+
+    return re.sub(r'[A-Za-z]+', replace_word, text)
 
 
-class PyMuPDF4LLMEngine(OCREngine):
-    name = "pymupdf4llm"
+def is_text_garbled(text: str) -> bool:
+    cleaned = text.strip()
+    if not cleaned:
+        return True
+
+    if "\ufffd" in cleaned:
+        return True
+
+    words = [w for w in cleaned.split() if w.strip()]
+    if not words:
+        return True
+
+    if len(cleaned) < 200:
+        avg_word_len = sum(len(w) for w in words) / len(words)
+        if avg_word_len < 2.0:
+            return True
+
+    lines = [line.strip() for line in cleaned.split("\n") if line.strip()]
+    if not lines:
+        return True
+
+    garbled_lines = 0
+    for line in lines:
+        words = line.split()
+        if not words:
+            continue
+
+        if len(words) >= 4:
+            alpha_chars = sum(1 for c in line if c.isalpha())
+            if len(line) > 0 and alpha_chars / len(line) < 0.4:
+                garbled_lines += 1
+                continue
+
+        allowed_chars = sum(1 for c in line if c.isalnum() or c.isspace() or c in "|_-+=*()[]{}@!?:;\"',.$%#&/\\<>~^")
+        if len(line) > 15:
+            allowed_ratio = allowed_chars / len(line)
+            if allowed_ratio < 0.75:
+                garbled_lines += 1
+                continue
+
+    return (garbled_lines / len(lines)) > 0.2
+
+
+def _sort_blocks_by_reading_order(blocks: List[dict], line_tolerance: float = 8.0) -> List[dict]:
+    if not blocks:
+        return blocks
+
+    def sort_key(b: dict) -> Tuple[float, float]:
+        return (round(b.get("y", 0) / line_tolerance) * line_tolerance, b.get("x", 0))
+
+    return sorted(blocks, key=sort_key)
+
+
+
+
+
+class PyMuPDFEngine(OCREngine):
+    name = "pymupdf"
     priority = 100
     requires_gpu = False
 
     def __init__(self):
-        self._available = HAS_PYMUPDF4LLM
+        self._available = HAS_PYMUPDF
 
     def is_available(self) -> bool:
         return self._available
 
     def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
-        # Fall back to image-specific engines for pure image files
         return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name)
 
     def process_pdf(self, file_path: str, page_range: Optional[List[int]] = None) -> List[OCRPageResult]:
@@ -118,44 +200,57 @@ class PyMuPDF4LLMEngine(OCREngine):
             return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name)]
 
         try:
-            # page_chunks=True returns structured page-wise layout markdown and page boxes
-            chunks = pymupdf4llm.to_markdown(file_path, page_chunks=True)
+            doc = fitz.open(file_path)
             pages = []
             page_nums = set(page_range) if page_range else set()
-            for i, chunk in enumerate(chunks):
-                # pymupdf4llm pages are 0-indexed in metadata, but let's map it safely
-                meta = chunk.get("metadata", {})
-                page_num = meta.get("page", i) + 1
-                if page_nums and page_num not in page_nums:
-                    continue
-                
-                text = chunk.get("text", "")
+            
+            # Parallel page processing
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            
+            def process_page(idx):
+                page = doc[idx]
+                text = page.get_text()
                 markdown = text
-                
-                # Extract page layout boxes
                 blocks = []
-                for box in meta.get("page_boxes", []):
-                    if isinstance(box, (list, tuple)) and len(box) >= 4:
-                        blocks.append({
-                            "x": box[0],
-                            "y": box[1],
-                            "width": box[2] - box[0],
-                            "height": box[3] - box[1],
-                            "text": box[4] if len(box) > 4 else "",
-                            "type": box[6] if len(box) > 6 else "text"
-                        })
                 
-                pages.append(OCRPageResult(
-                    page_num=page_num,
+                for block in page.get_text("dict")["blocks"]:
+                    if block["type"] == 0:  # text block
+                        for line in block.get("lines", []):
+                            for span in line.get("spans", []):
+                                bbox = span["bbox"]
+                                blocks.append({
+                                    "x": bbox[0],
+                                    "y": bbox[1],
+                                    "width": bbox[2] - bbox[0],
+                                    "height": bbox[3] - bbox[1],
+                                    "text": span["text"],
+                                    "type": "text"
+                                })
+                
+                return OCRPageResult(
+                    page_num=idx + 1,
                     markdown=markdown,
                     text=text,
                     engine=self.name,
                     blocks=blocks,
-                    metadata={"tables": len(chunk.get("tables", [])), "images": len(chunk.get("images", []))}
-                ))
-            if not pages:
-                md = pymupdf4llm.to_markdown(file_path)
-                pages = [OCRPageResult(page_num=1, markdown=md, text=md, engine=self.name)]
+                    metadata={}
+                )
+            
+            # Process pages in parallel (up to 8 workers)
+            indices = [i for i in range(len(doc)) if not page_nums or (i + 1) in page_nums]
+            with ThreadPoolExecutor(max_workers=min(8, len(indices))) as executor:
+                futures = {executor.submit(process_page, idx): idx for idx in indices}
+                results = {}
+                for future in as_completed(futures):
+                    idx = futures[future]
+                    try:
+                        results[idx] = future.result()
+                    except Exception:
+                        results[idx] = OCRPageResult(page_num=idx + 1, markdown="", text="", engine=self.name)
+            
+            # Sort by page number
+            pages = [results[idx] for idx in sorted(results.keys())]
+            doc.close()
             return pages
         except Exception as e:
             return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name, metadata={"error": str(e)})]
@@ -163,7 +258,7 @@ class PyMuPDF4LLMEngine(OCREngine):
 
 class LiteParseEngine(OCREngine):
     name = "liteparse"
-    priority = 95
+    priority = 110
     requires_gpu = False
 
     def __init__(self):
@@ -173,7 +268,6 @@ class LiteParseEngine(OCREngine):
         return self._available
 
     def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
-        # LiteParse is PDF-native; fallback to empty to trigger RapidOCR for images
         return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name)
 
     def process_pdf(self, file_path: str, page_range: Optional[List[int]] = None) -> List[OCRPageResult]:
@@ -181,10 +275,28 @@ class LiteParseEngine(OCREngine):
             return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name)]
 
         try:
-            parser = LiteParse()
+            parser = LiteParse(ocr_enabled=False)
             result = parser.parse(file_path)
             pages = []
             page_nums = set(page_range) if page_range else set()
+            
+            # Open PDF fitz and pdfium once to reuse across pages
+            doc_fitz = None
+            if HAS_PYMUPDF:
+                try:
+                    doc_fitz = fitz.open(file_path)
+                except Exception:
+                    pass
+
+            doc_pdfium = None
+            if HAS_PYPDFIUM:
+                try:
+                    import pypdfium2 as pdfium
+                    doc_pdfium = pdfium.PdfDocument(file_path)
+                except Exception:
+                    pass
+
+            rapid_engine = None
             for i, page in enumerate(result.pages):
                 page_num = i + 1
                 if page_nums and page_num not in page_nums:
@@ -193,28 +305,56 @@ class LiteParseEngine(OCREngine):
                 markdown = getattr(page, "markdown", None) or text
                 blocks = []
                 current_engine = self.name
-                
-                # ponytail: simple heuristic length check (< 50) for scanned pages. Upgrade path: use layout complexity analysis.
-                if len(text.strip()) < 50:
+                text_items = getattr(page, "text_items", [])
+
+                # Hybrid logic: If LiteParse is empty/garbled, try native PyMuPDF first
+                if is_text_garbled(text) and doc_fitz is not None:
                     try:
-                        import pypdfium2 as pdfium
-                        doc = pdfium.PdfDocument(file_path)
-                        page_obj = doc[i]
-                        pil_img = page_obj.render(scale=192/72).to_pil().convert("RGB")
-                        doc.close()
-                        
-                        rapid = RapidOCREngine()
-                        ocr_res = rapid.process_image(pil_img, page_num=page_num)
-                        if ocr_res.text.strip():
-                            text = ocr_res.text
-                            markdown = ocr_res.markdown
-                            blocks = ocr_res.blocks
-                            current_engine = "rapidocr"
+                        fitz_page = doc_fitz[i]
+                        pymupdf_text = fitz_page.get_text()
+                        if pymupdf_text.strip() and not is_text_garbled(pymupdf_text):
+                            text = pymupdf_text
+                            markdown = pymupdf_text
+                            # Extract native blocks
+                            for block in fitz_page.get_text("dict")["blocks"]:
+                                if block["type"] == 0:
+                                    for line in block.get("lines", []):
+                                        for span in line.get("spans", []):
+                                            bbox = span["bbox"]
+                                            blocks.append({
+                                                "x": bbox[0],
+                                                "y": bbox[1],
+                                                "width": bbox[2] - bbox[0],
+                                                "height": bbox[3] - bbox[1],
+                                                "text": span["text"],
+                                                "type": "text"
+                                            })
+                            current_engine = "pymupdf"
                     except Exception:
                         pass
-                        
-                if not blocks:
-                    for item in getattr(page, "text_items", []):
+
+                # If still empty/garbled after native check, fall back to Tesseract OCR
+                if is_text_garbled(text):
+                    try:
+                        if doc_pdfium is not None:
+                            page_obj = doc_pdfium[i]
+                            # Render at 300 DPI for high quality
+                            pil_img = page_obj.render(scale=300/72).to_pil().convert("RGB")
+
+                            if rapid_engine is None:
+                                rapid_engine = TesseractEngine()
+                            ocr_res = rapid_engine.process_image(pil_img, page_num=page_num)
+                            if ocr_res.text.strip():
+                                text = ocr_res.text
+                                markdown = ocr_res.markdown
+                                blocks = ocr_res.blocks
+                                current_engine = "tesseract"
+                    except Exception:
+                        text = ""
+                        markdown = ""
+
+                if not blocks and text_items:
+                    for item in text_items:
                         blocks.append({
                             "text": item.text,
                             "x": item.x,
@@ -225,14 +365,26 @@ class LiteParseEngine(OCREngine):
                             "font_size": getattr(item, "font_size", None),
                             "confidence": getattr(item, "confidence", None),
                         })
+                    blocks = _sort_blocks_by_reading_order(blocks)
+
+                has_real_text = bool(text.strip())
                 pages.append(OCRPageResult(
                     page_num=page_num,
                     markdown=markdown,
                     text=text,
                     engine=current_engine,
                     blocks=blocks,
-                    metadata={"text_items": len(blocks), "fallback": current_engine != self.name}
+                    metadata={"text_items": len(blocks), "fallback": current_engine != self.name, "has_real_text": has_real_text}
                 ))
+
+            # Cleanup open documents
+            if doc_fitz is not None:
+                try: doc_fitz.close()
+                except Exception: pass
+            if doc_pdfium is not None:
+                try: doc_pdfium.close()
+                except Exception: pass
+
             if not pages:
                 pages = [OCRPageResult(page_num=1, markdown=result.text, text=result.text, engine=self.name)]
             return pages
@@ -240,95 +392,62 @@ class LiteParseEngine(OCREngine):
             return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name, metadata={"error": str(e)})]
 
 
-class RapidOCREngine(OCREngine):
-    name = "rapidocr"
+class TesseractEngine(OCREngine):
+    name = "tesseract"
     priority = 90
     requires_gpu = False
 
     def __init__(self):
-        self._backend = None
-        self._available = HAS_RAPIDOCR
+        self._available = HAS_TESSERACT
 
     def is_available(self) -> bool:
         return self._available
 
-    def _get_backend(self):
-        if self._backend is None and self._available:
-            try:
-                # Check for high-accuracy PP-OCRv5/v3 models in the local models/ocr folder
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-                ocr_model_dir = os.path.join(base_dir, "models", "ocr")
-                
-                det_path = os.path.join(ocr_model_dir, "det.onnx")
-                rec_path = os.path.join(ocr_model_dir, "rec.onnx")
-                dict_path = os.path.join(ocr_model_dir, "dict.txt")
-                
-                if os.path.exists(det_path) and os.path.exists(rec_path) and os.path.exists(dict_path):
-                    self._backend = RapidOCR(
-                        det_model_path=det_path,
-                        rec_model_path=rec_path,
-                        rec_keys_path=dict_path
-                    )
-                else:
-                    self._backend = RapidOCR()
-            except Exception:
-                self._available = False
-        return self._backend
-
     def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
-        backend = self._get_backend()
-        if not backend:
+        if not self._available:
             return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name)
 
         try:
             preprocessed = preprocess_image(image)
-            result = backend(preprocessed)
-            texts = result.txts if result else []
-            scores = result.scores if result else []
-            text = "\n".join(texts) if texts else ""
-            md = result.to_markdown() if hasattr(result, "to_markdown") else text
-
+            text = pytesseract.image_to_string(preprocessed)
+            
             blocks = []
-            if hasattr(result, "boxes") and result.boxes is not None:
-                try:
-                    import numpy as np
-                    boxes = result.boxes
-                    for idx, box in enumerate(boxes):
-                        blocks.append({
-                            "text": texts[idx] if idx < len(texts) else "",
-                            "bbox": box.tolist() if hasattr(box, "tolist") else list(box),
-                            "confidence": float(scores[idx]) if idx < len(scores) else 0.0,
-                        })
-                except Exception:
-                    pass
+            data = pytesseract.image_to_data(preprocessed, output_type=pytesseract.Output.DICT)
+            n_boxes = len(data['text'])
+            for i in range(n_boxes):
+                if data['text'][i].strip():
+                    blocks.append({
+                        "text": data['text'][i],
+                        "x": data['left'][i],
+                        "y": data['top'][i],
+                        "width": data['width'][i],
+                        "height": data['height'][i],
+                        "confidence": float(data['conf'][i]) / 100.0 if data['conf'][i] > 0 else 0.0
+                    })
+            
+            blocks = _sort_blocks_by_reading_order(blocks)
 
             return OCRPageResult(
                 page_num=page_num,
-                markdown=md,
+                markdown=text,
                 text=text,
                 engine=self.name,
                 blocks=blocks,
-                metadata={"confidence": float(sum(scores)) / len(scores) if scores else 0.0}
+                metadata={}
             )
         except Exception as e:
             return OCRPageResult(page_num=page_num, markdown="", text="", engine=self.name, metadata={"error": str(e)})
 
     def process_pdf(self, file_path: str, page_range: Optional[List[int]] = None) -> List[OCRPageResult]:
-        import pypdfium2 as pdfium
         results = []
         try:
-            doc = pdfium.PdfDocument(file_path)
+            doc = pypdfium2.PdfDocument(file_path)
             page_nums = set(page_range) if page_range else set()
-            backend = self._get_backend()
-            if not backend:
-                doc.close()
-                return [OCRPageResult(page_num=0, markdown="", text="", engine=self.name)]
 
             for idx in range(len(doc)):
                 if page_nums and (idx + 1) not in page_nums:
                     continue
-                page_obj = doc[idx]
-                pil_img = page_obj.render(scale=192/72).to_pil().convert("RGB")
+                pil_img = doc[idx].render(scale=300/72).to_pil().convert("RGB")
                 result = self.process_image(pil_img, page_num=idx + 1)
                 results.append(result)
             doc.close()
@@ -340,9 +459,9 @@ class RapidOCREngine(OCREngine):
 class OCRManager:
     def __init__(self):
         self.engines: List[OCREngine] = [
-            PyMuPDF4LLMEngine(),
+            PyMuPDFEngine(),
             LiteParseEngine(),
-            RapidOCREngine(),
+            TesseractEngine(),
         ]
         self.engines.sort(key=lambda e: -e.priority)
 
@@ -352,29 +471,85 @@ class OCRManager:
                 return engine
         return None
 
+    def process_image(self, image: Image.Image, page_num: int = 0) -> OCRPageResult:
+        best = None
+        for engine in self.engines:
+            if not engine.is_available():
+                continue
+            try:
+                result = engine.process_image(image, page_num)
+                text = result.text.strip()
+                if text and not is_text_garbled(text):
+                    # clean shadow text
+                    result.text = clean_shadow_text(result.text)
+                    result.markdown = clean_shadow_text(result.markdown)
+                    for block in result.blocks:
+                        if "text" in block and block["text"]:
+                            block["text"] = clean_shadow_text(block["text"])
+                    return result
+                if text and best is None:
+                    best = result
+            except Exception:
+                continue
+        if best:
+            best.text = clean_shadow_text(best.text)
+            best.markdown = clean_shadow_text(best.markdown)
+            for block in best.blocks:
+                if "text" in block and block["text"]:
+                    block["text"] = clean_shadow_text(block["text"])
+        return best if best else OCRPageResult(page_num=page_num, markdown="", text="", engine="none")
+
     def get_engine_status(self) -> dict:
         return {
             "available": [e.name for e in self.engines if e.is_available()],
             "preferred": self.get_best_engine().name if self.get_best_engine() else None,
-            "rapidocr": {"available": HAS_RAPIDOCR},
+            "pymupdf": {"available": HAS_PYMUPDF},
             "liteparse": {"available": HAS_LITEPARSE},
-            "pymupdf4llm": {"available": HAS_PYMUPDF4LLM},
+            "tesseract": {"available": HAS_TESSERACT},
         }
 
     def process_with_fallback(self, file_path: str, ext: str) -> OCRResult:
-        last_error = None
+        last_error = ""
+        best = None
+        best_not_garbled = False
         for engine in self.engines:
             if not engine.is_available():
                 continue
             try:
                 result = engine.process_file(file_path, ext)
-                if result.text.strip():
+                text = result.text.strip()
+                not_garbled = bool(text) and not is_text_garbled(text)
+                if not_garbled:
+                    # Clean shadow text
+                    result.text = clean_shadow_text(result.text)
+                    result.markdown = clean_shadow_text(result.markdown)
+                    for page in result.pages:
+                        page.text = clean_shadow_text(page.text)
+                        page.markdown = clean_shadow_text(page.markdown)
+                        for block in page.blocks:
+                            if "text" in block and block["text"]:
+                                block["text"] = clean_shadow_text(block["text"])
                     return result
-                last_error = f"{engine.name} returned empty text"
+                if text:
+                    if best is None:
+                        best = result
+                        best_not_garbled = False
+                if not text:
+                    last_error = f"{engine.name} returned empty text"
             except Exception as e:
                 last_error = f"{engine.name}: {str(e)}"
                 continue
 
+        if best:
+            best.text = clean_shadow_text(best.text)
+            best.markdown = clean_shadow_text(best.markdown)
+            for page in best.pages:
+                page.text = clean_shadow_text(page.text)
+                page.markdown = clean_shadow_text(page.markdown)
+                for block in page.blocks:
+                    if "text" in block and block["text"]:
+                        block["text"] = clean_shadow_text(block["text"])
+            return best
         return OCRResult(
             markdown="",
             text="",

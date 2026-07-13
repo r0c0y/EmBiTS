@@ -46,6 +46,7 @@
             padding: 24px;
             gap: 20px;
             flex-shrink: 0;
+            overflow-y: auto;
         }
         .brand {
             display: flex;
@@ -57,388 +58,746 @@
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border);
         }
-        nav {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
-        }
+        nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
         .nav-link {
-            padding: 12px 16px;
-            border-radius: 8px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 12px 16px; border-radius: 8px; color: var(--text-muted);
+            text-decoration: none; font-size: 14px; font-weight: 600;
+            display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s;
         }
-        .nav-link:hover, .nav-link.active {
-            background-color: rgba(56, 189, 248, 0.1);
-            color: var(--primary);
-        }
+        .nav-link:hover, .nav-link.active { background-color: rgba(56, 189, 248, 0.1); color: var(--primary); }
+        .nav-sub { font-size: 11px; font-weight: 400; padding: 6px 12px 6px 40px; color: var(--text-muted); cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+        .nav-sub:hover, .nav-sub.active { color: var(--primary); background: rgba(56, 189, 248, 0.05); }
         main {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
         }
-        .doc-section {
-            display: none;
-            animation: fadeIn 0.3s ease-in-out forwards;
-        }
-        .doc-section.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .doc-section { display: none; animation: fadeIn 0.3s ease-in-out forwards; }
+        .doc-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
         h2 { font-size: 22px; font-weight: 600; margin: 24px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--primary); }
         h3 { font-size: 16px; font-weight: 600; margin: 16px 0 8px; }
+        h4 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; color: var(--text-muted); }
         p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px; }
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(12px);
-        }
-        pre {
-            background: #030712;
-            border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 12px 0;
-        }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; backdrop-filter: blur(12px); }
+        pre { background: #030712; border: 1px solid var(--border); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
         code { font-family: monospace; font-size: 13px; color: #f472b6; }
-        .mermaid {
-            background: #111827;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-        }
-        th, td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            text-align: left;
-            font-size: 13px;
-        }
+        .mermaid { background: #111827; padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin: 20px 0; display: flex; justify-content: center; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
         th { font-weight: 600; color: var(--primary); background: rgba(56, 189, 248, 0.05); }
-        .back-btn {
-            background: var(--primary);
-            color: var(--bg);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: auto;
-        }
+        .back-btn { background: var(--primary); color: var(--bg); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-top: auto; }
         .back-btn:hover { background: var(--primary-hover); }
-        
-        /* Codebase Explorer Styles */
-        .codebase-layout {
-            display: grid;
-            grid-template-columns: 280px 1px 1fr;
-            gap: 16px;
-            height: 600px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--surface);
-            overflow: hidden;
-            margin-top: 20px;
-        }
-        .file-tree {
-            padding: 16px;
-            overflow-y: auto;
-            font-size: 13px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .tree-divider {
-            background-color: var(--border);
-            width: 100%;
-            height: 100%;
-        }
-        .file-content-pane {
-            padding: 28px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .folder-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .folder-trigger {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text);
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .folder-trigger:hover {
-            background: rgba(255, 255, 255, 0.04);
-        }
-        .folder-content {
-            margin-left: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border-left: 1px dashed var(--border);
-            padding-left: 14px;
-        }
-        .file-tree-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            cursor: pointer;
-            color: var(--text-muted);
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        .file-tree-item:hover, .file-tree-item.active {
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--primary);
-        }
-        .file-tree-item i, .folder-trigger i {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-        .badge-status {
-            font-size: 9px;
-            padding: 1px 4px;
-            border-radius: 4px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .badge-status.modified { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-        .badge-status.stable { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        ul, ol { margin-left: 20px; margin-bottom: 12px; }
+        li { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 6px; }
+        .endpoint { background: rgba(56, 189, 248, 0.03); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .endpoint .method { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 8px; }
+        .endpoint .method.get { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .endpoint .method.post { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .endpoint .method.delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .endpoint .method.put { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .endpoint .path { font-family: monospace; font-size: 13px; font-weight: 600; }
+        .endpoint .desc { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+        .endpoint .params { margin-top: 8px; font-size: 12px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; }
     </style>
 </head>
 <body>
     <aside>
-        <div class="brand">
-            <i data-lucide="book-open"></i>
-            <span>ScribeLink Docs</span>
-        </div>
+        <div class="brand"><i data-lucide="book-open"></i><span>ScribeLink Docs</span></div>
         <nav>
             <div class="nav-link active" onclick="showTab('architecture')"><i data-lucide="network"></i> System Overview</div>
-            <div class="nav-link" onclick="showTab('pipelines')"><i data-lucide="cpu"></i> Data Pipelines</div>
+            <div class="nav-link" onclick="showTab('ingestion')"><i data-lucide="upload"></i> Ingestion Pipeline</div>
+            <div class="nav-link" onclick="showTab('ocr')"><i data-lucide="scan"></i> OCR Engine</div>
+            <div class="nav-link" onclick="showTab('search')"><i data-lucide="search"></i> Search & Retrieval</div>
+            <div class="nav-link" onclick="showTab('frontend')"><i data-lucide="monitor"></i> Frontend Architecture</div>
+            <div class="nav-link" onclick="showTab('admin')"><i data-lucide="settings"></i> Admin & Knowledge Map</div>
             <div class="nav-link" onclick="showTab('schema')"><i data-lucide="database"></i> Database Schema</div>
-            <div class="nav-link" onclick="showTab('customization')"><i data-lucide="settings"></i> Configurations</div>
-            <div class="nav-link" onclick="showTab('codebase')"><i data-lucide="folder-open"></i> Codebase Explorer</div>
+            <div class="nav-link" onclick="showTab('audit')"><i data-lucide="shield"></i> Audit Ledger</div>
+            <div class="nav-link" onclick="showTab('api')"><i data-lucide="code"></i> API Reference</div>
+            <div class="nav-link" onclick="showTab('config')"><i data-lucide="sliders"></i> Configuration</div>
         </nav>
         <a href="/" class="back-btn"><i data-lucide="arrow-left"></i> Back to Workspace</a>
     </aside>
 
     <main>
-        <!-- SYSTEM OVERVIEW TAB -->
+        <!-- SYSTEM OVERVIEW -->
         <section id="architecture" class="doc-section active">
             <h1>System Architecture</h1>
-            <p>High-level system topology of ScribeLink running in an air-gapped local workstation environment.</p>
-            
+            <p>High-level topology of ScribeLink running in an air-gapped local workstation environment.</p>
+
             <div class="card">
-                <h2>Interactive Architecture Model</h2>
+                <h2>Layered Architecture</h2>
                 <div class="mermaid">
                 graph TD
-                    A[User / Upload Interface] -->|Upload Docs| B[Ingestion Engine]
-                    B -->|Extract Text| C[OCR & Parsing Pipeline]
-                    C -->|Raw Text Chunks| D[Embedder Client]
-                    D -->|Ollama /api/embeddings| E[Vector Embeddings]
-                    E -->|float32 struct pack| F[(Local SQLite Database)]
-                    F -->|RRF Combination| G[Search Engine]
-                    H[User Query] -->|Ollama vector| G
-                    G -->|context build| I[Local LLM Generation]
-                    I -->|Ollama /api/chat| J[AI Decision Summary]
+                    subgraph Client["Client Tier (Browser SPA)"]
+                        Dashboard["app.js - Workspace (Auth/Search/Upload/Registry)"]
+                        Admin["admin.js - Dashboard/CRUD/Knowledge Map"]
+                        Viewer["utils.js - OCR Viewer/Markdown Parser/History"]
+                        Graph["graph.js - Cytoscape.js Interactions"]
+                    end
+                    subgraph FastAPI["FastAPI Routing Tier"]
+                        Main["main.py - Search/Upload/Auth/Preview/Translate"]
+                        AdminAPI["admin.py - Dashboard/Users/Knowledge Map CRUD"]
+                        RegistryAPI["registry.py - Registry Listing/OCR"]
+                    end
+                    subgraph Ingestion["Ingestion Tier"]
+                        Ingest["ingestion.py - File Parsing & Chunking"]
+                        OcrEngine["ocr_engine.py - Multi-engine OCR Manager"]
+                        Preprocess["preprocess.py - Image Prep Pipeline"]
+                        OcrStore["ocr_storage.py - Sidecar JSON+MD Persistence"]
+                    end
+                    subgraph Retrieval["Retrieval & AI Tier"]
+                        Search["search_engine.py - RRF Hybrid Search + Context Builder"]
+                        Vector["vector_store.py - Cosine Similarity Search"]
+                        Embed["embedder.py - Ollama Embedding Client"]
+                        Llm["llm_client.py - LLM Proxy (Ollama + Groq fallback)"]
+                        Summarizer["summarizer.py - RAPTOR Hierarchical Summaries"]
+                        Conflict["conflict.py - Parameter Conflict Detection"]
+                        SearchHelpers["search_helpers.py - Tokenizer/Graph Builder/Meta Query"]
+                    end
+                    subgraph Data["Data Tier"]
+                        DB[(SQLite app.db - 10 Tables + 2 FTS5)]
+                        Originals["static/originals/ - Preserved Uploads"]
+                        OcrFiles["storage/ocr/ - JSON+MD Sidecars"]
+                    end
+                    Client -->|HTTP| FastAPI
+                    FastAPI -->|upload| Ingestion
+                    FastAPI -->|query| Retrieval
+                    Ingestion -->|store| Data
+                    Retrieval -->|read| Data
                 </div>
+            </div>
+
+            <div class="card">
+                <h2>Running the Server</h2>
+                <p>Start with <code>python main.py</code>. By default the server runs with <strong>auto-reload disabled</strong>. To enable hot-reload during development:</p>
+                <pre><code>SCL_RELOAD=true python main.py</code></pre>
+                <p>Opens at <code>http://localhost:8000</code>. First user to sign up gets admin role.</p>
+            </div>
+
+            <div class="card">
+                <h2>Core Data Flow</h2>
+                <ol>
+                    <li><strong>Upload:</strong> File received by FastAPI → SHA-256 hash + duplicate check → DB row (status: pending) → temp file → background task returns immediately</li>
+                    <li><strong>Background Processing:</strong> OCR/extraction → page-aware form-aware chunking (800 char sliding window) → FTS5 index + vector embeddings → RAPTOR hierarchical summaries → SHA-256 audit log</li>
+                    <li><strong>Search:</strong> Meta-query detection (bypass for "list all documents") → parallel FTS5 BM25 + vector cosine similarity → RRF merge (k=60) → token title-boost + length normalization → query-aware context ordering → top 12 chunks, max 3 per doc → RAPTOR summaries injected per-source → LLM with <code>&lt;concise&gt;</code>/<code>&lt;elaborate&gt;</code> output → parameter conflict scan → graph with shared-query-topic edges</li>
+                    <li><strong>Audit:</strong> Every action (SIGNUP, SIGNIN, QUERY, UPLOAD) logged to SHA-256 chained ledger for tamper-evident compliance</li>
+                </ol>
             </div>
 
             <div class="card">
                 <h2>RRF Hybrid Search Topology</h2>
-                <p>Retrieval combines classical keyword searching (FTS5) and dense vector embeddings using Reciprocal Rank Fusion (RRF).</p>
                 <div class="mermaid">
-                graph LR
-                    Query[User Query] --> Keyword[SQLite FTS5 Keyword Search]
-                    Query --> Vector[Cosine Similarity Vector Search]
-                    Keyword --> RankK[Rankings List A]
-                    Vector --> RankV[Rankings List B]
-                    RankK --> RRF[RRF Merger Engine]
+                graph TD
+                    Query[User Query] --> FTS5[SQLite FTS5 BM25 Keyword]
+                    Query --> Vector[Ollama Embedding → Cosine Similarity]
+                    FTS5 --> RankK[Rankings A (top 30)]
+                    Vector --> RankV[Rankings B (top 30)]
+                    RankK --> RRF[RRF Merger - k=60]
                     RankV --> RRF
-                    RRF --> TopK[Top Retained Context Chunks]
+                    RRF --> Boost[Title-Boost + Length Normalization]
+                    Boost --> QSort[Query-Aware Sort by _max_qscore]
+                    QSort --> Limit[Per-Doc Limit - max 3 chunks]
+                    Limit --> Ctx[Context Builder - Summaries + Excerpts]
+                    Ctx --> LLM[Ollama gemma3:1b → Answer with Citations]
+                    LLM --> Output
+                    subgraph Output["Response"]
+                        Ans[answer with <concise>/<elaborate>]
+                        Cite[citations array]
+                        G[graph nodes + edges with labels]
+                        Conf[conflicts array]
+                    end
+                    Ctx --> Output
                 </div>
+                <p><strong>RRF Score:</strong> <code>Score(d) = 1/(60 + rank_k(d)) + 1/(60 + rank_v(d))</code></p>
+                <p><strong>Title boost:</strong> +5 per query term matched in document title</p>
+                <p><strong>Length normalization:</strong> <code>1.0 / max(1.0, (doc_len / 1000) ^ 0.3)</code></p>
             </div>
         </section>
 
-        <!-- DATA PIPELINES TAB -->
-        <section id="pipelines" class="doc-section">
-            <h1>Data Pipelines</h1>
-            <p>Detailed sequence and workflow models for document ingestion and search query answering.</p>
+        <!-- INGESTION PIPELINE -->
+        <section id="ingestion" class="doc-section">
+            <h1>Ingestion Pipeline</h1>
+            <p>End-to-end flow from file upload to fully indexed document, including format-specific parsers, form-aware chunking, and background processing.</p>
 
             <div class="card">
-                <h2>Document Ingestion Workflow</h2>
-                <p>Documents uploaded undergo localized text extraction, image OCR, chunking, and embedding generation.</p>
-                <div class="mermaid">
-                sequenceDiagram
-                    autonumber
-                    User->>Ingestion: Upload Document File (.pdf, .docx, .png)
-                    Ingestion->>Parser: Extract Native Text Structure
-                    alt Native text exists
-                        Parser-->>Ingestion: Return Text Content
-                    else Image / Scanned Doc
-                        Parser->>OCR Engine: Extract via RapidOCR
-                        OCR Engine-->>Ingestion: Return OCR OCR text
-                    end
-                    Ingestion->>Preprocessor: Chunk text (Sliding window)
-                    Preprocessor->>Embedder: Calculate embedding vector (embeddinggemma)
-                    Embedder-->>Ingestion: Return 768-dim float array
-                    Ingestion->>SQLite: Insert Chunk, metadata, and packed BLOB vector
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>PageIndex Page-Aware Chunking & Document Navigation</h2>
-                <p>To eliminate arbitrary text divisions across pages, ScribeLink integrates page-aware structural indexing inspired by the PageIndex and Haystack architectures:</p>
+                <h2>Upload Handler — <code>main.py:upload_document()</code></h2>
+                <h3>Request Validation</h3>
                 <ul>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Page-Bound Ingestion:</b> During document ingestion, the file parser splits content page-by-page. For multi-page PDFs or OCR-scanned images, text is chunked within its respective page boundaries, and stored in the SQLite database with its explicit 1-indexed <code>page_number</code>.</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Page-Aware RAG Citations:</b> The search retrieval pipeline queries the <code>page_number</code> value along with raw text. This page number is injected directly into the LLM context prompt (e.g. <code>* Excerpt (Chunk 4, Page 3): ...</code>).</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Explainable Provenance:</b> The LLM is instructed to cite findings with precise page references (e.g., <code>[1, Page 3]</code>) instead of generic file tags. The citation lists in the UI render the exact page indicators for immediate verification by engineers.</li>
+                    <li>Validates file extension against allowed set (<code>.txt .pdf .docx .xlsx .xls .pptx .png .jpg .jpeg .tiff .bmp .csv .md .json</code>)</li>
+                    <li>Computes SHA-256 hash of raw bytes</li>
+                    <li>Duplicate check: same <code>content_hash</code> or same <code>file_path</code> + same <code>project_id</code> → returns 409 with duplicate status</li>
+                    <li>Filename sanitization: removes non-alphanumeric chars (except space, underscore, hyphen), truncates to 200 chars</li>
                 </ul>
+                <h3>DB Insertion</h3>
+                <p>Inserts into <code>meetings</code> table with <code>status = "pending"</code>. All 20 columns:</p>
+                <pre><code>INSERT INTO meetings (id, title, date, lot_id, project_id, file_path, file_size_bytes,
+    transcript_text, source_type, content_hash, created_at, ocr_quality,
+    corrections_count, ocr_json, ocr_markdown, ocr_engine, page_count, uploaded_by, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</code></pre>
+                <h3>Background Processing — <code>_process_upload_background()</code></h3>
+                <ol>
+                    <li>Copy original file to <code>static/originals/{doc_id}_{filename}</code></li>
+                    <li>Call <code>ingestion.ingest(file_path, filename)</code> → returns <code>ExtractionResult</code> dict</li>
+                    <li>Generate <code>lot_id</code> as <code>LOT-{YYYY-MM}-{last4chars}</code></li>
+                    <li>Update meeting record with transcript, date, OCR metadata</li>
+                    <li>Store OCR sidecar via <code>ocr_storage.store_ocr_result()</code></li>
+                    <li>Insert page-aware chunks into <code>chunks</code> table (per-page chunking for OCR docs, single-pass for native text)</li>
+                    <li>Log audit entry (<code>UPLOAD</code>) with chunk count and engine name</li>
+                    <li>Call <code>auto_edges()</code> for lineage generation</li>
+                    <li>Trigger background summarization + embedding building</li>
+                    <li>Set <code>status = "completed"</code> (or <code>"failed"</code> on error with message in transcript_text)</li>
+                </ol>
             </div>
 
             <div class="card">
-                <h2>Document Parsers & Ingestion Engine</h2>
-                <p>The ingestion pipeline handles multiple formats natively on the local filesystem before splitting content into chunks:</p>
-                <ul>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PDF Documents:</b> Parsed using <code>pdfplumber</code> and <b>LiteParse</b> to extract text and tables page-by-page. If the pages are scanned (no text layer) or have sparse text, the page image is dynamically rendered using <code>pypdfium2</code> and sent to the OCR pipeline.</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Word Files (.docx):</b> Processed using <code>python-docx</code> to read paragraphs, headers, and bullet structures.</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Excel Sheets (.xlsx):</b> Loaded via <code>openpyxl</code>, converting active sheets to clean structured plain-text rows for indexing.</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>PowerPoint Slides (.pptx):</b> Parsed with <code>python-pptx</code>, extracting text from shapes, slides, and notes.</li>
-                    <li style="margin-left: 20px; margin-bottom: 8px; font-size: 13px;"><b>Images (.png, .jpg):</b> Loaded via <code>pillow</code> and processed through the <b>RapidOCR ONNX Engine</b> to pull OCR text.</li>
-                </ul>
-                <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                    <h3 style="color: var(--text); font-size: 14px; margin-top: 0; margin-bottom: 6px;">Offline LiteParse Tesseract Configuration:</h3>
-                    <p>For fully air-gapped/offline installations utilizing LiteParse's built-in Tesseract engine, download the language files (e.g. <code>eng.traineddata</code>) and configure the environment variable:</p>
-                    <pre style="margin: 8px 0; background: #030712; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace; color: var(--primary);">export TESSDATA_PREFIX=/path/to/tessdata_directory</pre>
-                    <p style="margin-top: 8px; margin-bottom: 0;"><b>Coordinate Space Conversion:</b> Bounding boxes are extracted in standard PDF points (1/72 inch). To display highlights on a rendered page image at 150 DPI, the system maps coordinates using a scaling multiplier: <code>Scale = DPI / 72 = 150 / 72 ≈ 2.083</code>.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>High-Accuracy PP-OCRv5 Offline Model Upgrade</h2>
-                <p>For processing low-resolution scans, hand-written minutes, or multilingual documents (such as Hindi or Latin text), the ingestion engine supports drop-in high-accuracy PP-OCRv5 model weights in ONNX format:</p>
-                <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                    <ol style="margin-left: 20px;">
-                        <li style="margin-bottom: 6px;">Create a folder at <code>hosted/models/ocr/</code>.</li>
-                        <li style="margin-bottom: 6px;">Download the PP-OCRv5 detection model (<code>det.onnx</code>) and recognition model (<code>rec.onnx</code> + <code>dict.txt</code>) from <a href="https://huggingface.co/monkt/paddleocr-onnx" target="_blank" style="color:var(--primary);">monkt/paddleocr-onnx on Hugging Face</a>.</li>
-                        <li style="margin-bottom: 6px;">Place the files inside the folder:
-                            <pre style="margin: 6px 0; background: #030712; padding: 8px; border-radius: 4px; border: 1px solid var(--border); font-family: monospace;">
-hosted/models/ocr/det.onnx
-hosted/models/ocr/rec.onnx
-hosted/models/ocr/dict.txt</pre>
-                        </li>
-                        <li style="margin-bottom: 6px;">The engine will automatically detect these files on startup and load the high-accuracy models instead of the default standard ones.</li>
-                    </ol>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Local AI Models Configuration</h2>
-                <p>All model inferences are executed locally via the Ollama server: </p>
+                <h2><code>ingestion.ingest()</code> — File Parsing Router</h2>
+                <p><code>ingestion.py</code> routes files by extension. Receives a <strong>file path string</strong> for clean temp-file management.</p>
+                <h3>Text-Based Formats</h3>
+                <p>For <code>.txt .csv .md .json .docx .xlsx .xls .pptx</code>: opens file with <code>open(path, "rb")</code> and passes file object to <code>_extract_structured()</code>:</p>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Model Purpose</th>
-                            <th>Active Model</th>
-                            <th>Dimensions / Specs</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><b>Text Vector Embeddings</b></td>
-                            <td><code>embeddinggemma:latest</code></td>
-                            <td>768 dimensions</td>
-                            <td>Calculates mathematical dense vector representations of parsed text chunks for semantic cosine-similarity search.</td>
-                        </tr>
-                        <tr>
-                            <td><b>Text Generation & QA</b></td>
-                            <td><code>gemma3:1b</code></td>
-                            <td>1.2B Parameters</td>
-                            <td>Performs reading comprehension and Hindi/English QA answering using retrieved context. Optimized for fast local execution on client CPUs.</td>
-                        </tr>
-                    </tbody>
+                    <tr><th>Format</th><th>Parser Library</th><th>Extraction Strategy</th></tr>
+                    <tr><td>.txt</td><td>—</td><td>UTF-8 decode (ignoring errors)</td></tr>
+                    <tr><td>.csv</td><td>—</td><td>UTF-8 decode, strip BOM</td></tr>
+                    <tr><td>.md</td><td>—</td><td>UTF-8 decode</td></tr>
+                    <tr><td>.json</td><td>—</td><td>UTF-8 decode (stored as text, not parsed)</td></tr>
+                    <tr><td>.docx</td><td><code>python-docx</code></td><td>Paragraph text + table rows (markdown table with pipe separators + header separator) + embedded image OCR (extracts images from <code>word/media/</code> via OCRManager)</td></tr>
+                    <tr><td>.xlsx / .xls</td><td><code>openpyxl</code></td><td>All rows from active sheet, markdown table format, blank rows skipped</td></tr>
+                    <tr><td>.pptx</td><td><code>python-pptx</code></td><td>Text from all shapes across all slides</td></tr>
                 </table>
+                <h3>Image & PDF Formats</h3>
+                <p>For <code>.pdf .png .jpg .jpeg .tiff .bmp</code>: calls <code>OCRManager.process_with_fallback(file_path, ext)</code> with the path string.</p>
+            </div>
+
             <div class="card">
-                <h2>Hybrid Retrieval & RRF Sequence</h2>
-                <p>The search engine uses a parallel hybrid retrieval strategy combining sparse (BM25) and dense semantic matches, resolved via Reciprocal Rank Fusion (RRF):</p>
-                
+                <h2>Form-Aware Chunking — <code>chunk_text()</code></h2>
+                <p>Sliding window with <strong>800 character chunks</strong>, <strong>200 character overlap</strong>. Before sliding-window splitting, the chunker detects form/template structure:</p>
+                <ul>
+                    <li>Scans for repeated <code>Field Name:</code> or <code>Field Name :</code> patterns</li>
+                    <li>If <strong>≥3 field patterns</strong> detected AND total text &lt; <strong>2400 chars</strong>, the entire document is kept as a <strong>single chunk</strong></li>
+                    <li>Otherwise: splits on paragraph boundaries (double newlines) → long paragraphs split on sentence boundaries → 800-char sliding window with 200-char overlap</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Date Detection — <code>detect_date()</code></h2>
+                <p>Multi-format regex scanning in priority order:</p>
+                <table>
+                    <tr><th>Pattern</th><th>Example</th></tr>
+                    <tr><td><code>YYYY-MM-DD</code></td><td>2025-03-15</td></tr>
+                    <tr><td><code>DD/MM/YYYY</code> or <code>DD-MM-YYYY</code></td><td>15/03/2025 (tries multiple orderings)</td></tr>
+                    <tr><td><code>Month DD, YYYY</code></td><td>Mar 15, 2025</td></tr>
+                    <tr><td><code>DD Month YYYY</code></td><td>15 March 2025</td></tr>
+                </table>
+                <p>First match wins. Returns <code>YYYY-MM-DD</code> format.</p>
+            </div>
+
+            <div class="card">
+                <h2>Ingestion Status Lifecycle</h2>
+                <table>
+                    <tr><th>Status</th><th>Set By</th><th>Meaning</th></tr>
+                    <tr><td><code>pending</code></td><td>Upload handler</td><td>File received, background task queued</td></tr>
+                    <tr><td><code>completed</code></td><td>Background task end</td><td>Fully processed and indexed</td></tr>
+                    <tr><td><code>failed</code></td><td>Error handler</td><td>Error message stored in <code>transcript_text</code></td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- OCR ENGINE -->
+        <section id="ocr" class="doc-section">
+            <h1>OCR Engine</h1>
+            <p>Multi-engine OCR system with priority-based fallback, per-page garbled text detection, and image preprocessing pipeline.</p>
+
+            <div class="card">
+                <h2>Architecture</h2>
+                <div class="mermaid">
+                graph TD
+                    Input[File Path] --> OCRManager
+                    subgraph OCRManager["OCRManager.process_with_fallback()"]
+                        LP[LiteParseEngine priority=110] -->|garbled?| G1{is_text_garbled?}
+                        G1 -->|clean| Result1[Return text]
+                        G1 -->|garbled| PM[PyMuPDFEngine priority=100]
+                        PM -->|parallel page processing| G2{is_text_garbled?}
+                        G2 -->|clean| Result2[Return text]
+                        G2 -->|garbled| Tess[TesseractEngine priority=90]
+                        Tess --> Result3[Return text]
+                    end
+                    Result1 --> Output[OCRResult with pages + blocks]
+                    Result2 --> Output
+                    Result3 --> Output
+                    Output --> Storage[ocr_storage.py]
+                    Storage --> JSON[storage/ocr/{id}.json - blocks + bounding boxes]
+                    Storage --> MD[storage/ocr/{id}.md - full markdown]
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Engine Interface</h2>
+                <p>All engines extend the abstract <code>OCREngine</code> base class:</p>
+                <pre><code>class OCREngine:
+    name: str              # Engine identifier
+    priority: int          # Higher = preferred first
+    requires_gpu: bool     # GPU requirement flag
+
+    def is_available() -> bool
+    def process_image(image, page_num) -> OCRPageResult
+    def process_pdf(file_path, page_range) -> List[OCRPageResult]
+    def process_file(file_path, ext) -> OCRResult</code></pre>
+                <h3>Result Data Structures</h3>
+                <pre><code>@dataclass
+class OCRPageResult:
+    page_num: int
+    markdown: str
+    text: str
+    images: list
+    metadata: dict
+    engine: str
+    blocks: list[dict]          # Bounding boxes: {x, y, width, height, text, type}
+
+@dataclass
+class OCRResult:
+    markdown: str
+    text: str
+    pages: list[OCRPageResult]
+    engine: str
+    metadata: dict</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>Engine Details</h2>
+                <h3>1. LiteParseEngine (Priority 110)</h3>
+                <p>Uses <code>liteparse</code> library for layout-aware PDF parsing with reading order detection. Handles multi-column layouts, tables, and embedded figures. Falls back per-page via <code>is_text_garbled()</code> → attempts native PyMuPDF text → then Tesseract OCR.</p>
+                <h3>2. PyMuPDFEngine (Priority 100)</h3>
+                <p>Native PDF text extraction via <code>fitz</code> (PyMuPDF). Provides low-level text blocks with bounding box coordinates. <strong>Processes pages in parallel</strong> using <code>ThreadPoolExecutor</code> (up to 8 workers).</p>
+                <h3>3. TesseractEngine (Priority 90)</h3>
+                <p>Uses <code>pytesseract</code> (Tesseract OCR engine). Applied as the final fallback for scanned images and garbled pages. Includes pre-processing via <code>preprocess.py</code> pipeline. Requires Tesseract system installation.</p>
+            </div>
+
+            <div class="card">
+                <h2>Garbled Text Detection — <code>is_text_garbled()</code></h2>
+                <p>Multi-heuristic check at <code>ocr_engine.py</code>:</p>
+                <ol>
+                    <li><strong>Empty text:</strong> If page text has fewer than 10 characters → garbled</li>
+                    <li><strong>Unicode replacement character:</strong> If <code>\ufffd</code> present → garbled</li>
+                    <li><strong>Short average word length:</strong> If text &lt; 200 chars and avg word length &lt; 2.0 → garbled</li>
+                    <li><strong>Alpha character ratio:</strong> Lines where alpha-char ratio &lt; 0.4 → garbled line</li>
+                    <li><strong>Allowed character ratio:</strong> Lines where allowed-char ratio &lt; 0.75 → garbled line</li>
+                    <li><strong>Threshold:</strong> If &gt; 20% of lines are garbled → entire page is garbled</li>
+                </ol>
+                <p>Triggers per-page intra-engine fallback: e.g., LiteParse processes pages 1-2, page 3 is garbled → page 3 routed to PyMuPDF → if still garbled → Tesseract OCR.</p>
+            </div>
+
+            <div class="card">
+                <h2>Shadow Text Cleaning — <code>clean_shadow_text()</code></h2>
+                <p>Post-processing function that cleans double-rendered shadow characters (common in scanned PDFs where bold/outline text renders twice at slightly offset positions):</p>
+                <ul>
+                    <li>Identifies words where ≥75% of characters are duplicated (e.g., <code>GRROOUUPP</code> → <code>GROUP</code>)</li>
+                    <li>Compresses each repeated character run by half</li>
+                    <li>Applied after OCR extraction before chunking</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Image Preprocessing — <code>preprocess.py</code></h2>
+                <p>Applied before Tesseract OCR to improve accuracy on noisy/scanned input:</p>
+                <ol>
+                    <li><strong>Alpha Channel Blending</strong> — blends RGBA transparency with white background</li>
+                    <li><strong>Grayscale conversion</strong> — <code>cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)</code></li>
+                    <li><strong>Deskew</strong> — detects rotation via <code>cv2.minAreaRect</code>, rotates to correct</li>
+                    <li><strong>Bilateral Filtering</strong> — smooths noise while preserving sharp font edge contours</li>
+                    <li><strong>Adaptive Binarization</strong> — converts to high-contrast binary pixel states using Gaussian threshold</li>
+                    <li><strong>Median Blur</strong> — removes salt-and-pepper noise</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h2>Sidecar Storage — <code>ocr_storage.py</code></h2>
+                <p>After OCR processing, results are persisted to:</p>
+                <table>
+                    <tr><th>File</th><th>Content</th><th>Purpose</th></tr>
+                    <tr><td><code>storage/ocr/{doc_id}.json</code></td><td>Per-page blocks with bounding boxes, markdown, metadata, engine name, sorted by reading order (y-coordinate with line tolerance then x-coordinate)</td><td>API consumption, viewer rendering, block-level retrieval</td></tr>
+                    <tr><td><code>storage/ocr/{doc_id}.md</code></td><td>Full markdown text of all pages</td><td>Quick preview, LLM context injection</td></tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>OCR Viewer — Frontend</h2>
+                <p>The document viewer in <code>utils.js</code> has two modes:</p>
+                <ul>
+                    <li><strong>Original mode:</strong> iframe for PDF/DOCX/TXT, zoomable image for PNG/JPG</li>
+                    <li><strong>OCR mode:</strong> A4 paper-style page with scrollable markdown, prev/next pagination</li>
+                </ul>
+                <p>Status messages: shows "OCR Unavailable" when no JSON sidecar exists, "OCR Processing" when the document is still in <code>pending</code> state.</p>
+            </div>
+        </section>
+
+        <!-- SEARCH & RETRIEVAL -->
+        <section id="search" class="doc-section">
+            <h1>Search & Retrieval</h1>
+            <p>RRF hybrid search system combining BM25 keyword matching with dense vector semantic search, title-boost and length normalization, per-document chunk caps, query-aware context ordering, RAPTOR summaries, conflict detection, and graph edge labels.</p>
+
+            <div class="card">
+                <h2>Search Flow — <code>execute_trace()</code></h2>
                 <div class="mermaid">
                 sequenceDiagram
                     autonumber
-                    User->>Search Engine: Input Search Query ("Why did Lot 2 yield drop?")
-                    par Parallel Path 1: Classical Search
-                        Search Engine->>SQLite FTS5: Match query tokens (BM25 ranker)
-                        SQLite FTS5-->>Search Engine: Return Ranked Keyword Chunks
-                    and Parallel Path 2: Semantic Search
-                        Search Engine->>Ollama (Embeddings): Request Query Vector (embeddinggemma)
-                        Ollama (Embeddings)-->>Search Engine: Return 768-dim Query Vector
-                        Search Engine->>SQLite Database: Load Packed float32 BLOB vectors
-                        Search Engine->>Vector Store: Compute Cosine Similarity (NumPy)
-                        Vector Store-->>Search Engine: Return Ranked Semantic Chunks
+                    User->>Search: Query + Filters
+                    par FTS5 BM25
+                        Search->>SQLite: FTS5 MATCH + bm25() ranking
+                        SQLite-->>Search: Top 30 results
+                        Note over Search: Title-boost (+5 per match)<br/>Length normalize (/ doc_len^0.3)
+                    and Vector Semantic
+                        Search->>Ollama: /api/embeddings
+                        Ollama-->>Search: 768-dim vector
+                        Search->>SQLite: Load chunk_embeddings
+                        Search->>Search: Cosine similarity
+                        Search-->>Search: Top 30 vector results
                     end
-                    Search Engine->>RRF Merger: Merge Rank lists A & B using RRF Formula
-                    RRF Merger-->>Search Engine: Select Top Chunks (Normalized confidence 0.0 - 0.99)
-                    Search Engine->>Ollama (LLM): Call /api/chat with Chunks + Query (gemma3:1b)
-                    Ollama (LLM)-->>Search Engine: Generate QA Response (concise/elaborate XML tags)
-                    Search Engine-->>User: Display AI Answer & Cytoscape Traceability Nodes
-                </div>
-
-                <div style="margin-top: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                    <h3 style="color: var(--text); font-size: 14px; margin-bottom: 6px;">Mathematical Fusion (Reciprocal Rank Fusion):</h3>
-                    <p>Both retrieval systems output an ordered list of matched chunks. To merge them fairly without scale mismatch, we use the Reciprocal Rank Fusion score for each document chunk <code>d</code>:</p>
-                    <pre style="margin: 8px 0; background: #030712; padding: 12px; border-radius: 6px; border: 1px solid var(--border);"><code style="color: var(--primary);">Score(d) = 1 / (60 + Rank_Keyword(d)) + 1 / (60 + Rank_Vector(d))</code></pre>
-                    <p>Where <code>Rank(d)</code> is the 1-based position of chunk <code>d</code> in the respective results list (defaulting to infinity if the chunk is not present in that list). A constant factor of <code>60</code> is used to mitigate the influence of outlier high ranks. The final RRF scores are normalized to a 0.0 - 0.99 range to display as relevance confidence levels in the browser.</p>
+                    Search->>RRF: 1/(60+rank_k) + 1/(60+rank_v)
+                    RRF-->>Search: Top 12 chunks (max 3 per doc)
+                    Search->>Search: Group by doc, sort by _max_qscore
+                    Search->>SQLite: Load L1 summaries
+                    Search->>Search: Build context (summaries BEFORE excerpts)
+                    Search->>Ollama: /api/chat with context
+                    Ollama-->>Search: LLM answer
+                    Search->>Search: Detect parameter conflicts
+                    Search-->>User: {answer, citations[], graph{...}, conflicts[]}
                 </div>
             </div>
-        </section>        <!-- DATABASE SCHEMA TAB -->
+
+            <div class="card">
+                <h2>1. Meta-Query Detection</h2>
+                <p><code>search_engine.py:is_meta_query()</code> — Trigger phrases like "list all documents", "all files", "project list", "list meetings" bypass hybrid search entirely and return a direct SQL listing formatted as LLM summary with metadata.</p>
+            </div>
+
+            <div class="card">
+                <h2>2. FTS5 Keyword Search — <code>keyword_search()</code></h2>
+                <ul>
+                    <li>Query tokenized via <code>tokenize()</code>: stopwords removed, porter stemmer applied via FTS5</li>
+                    <li>SQLite <code>chunks_fts</code> MATCH with <code>bm25()</code> ranking</li>
+                    <li>Project/document/date filters applied in WHERE clause</li>
+                    <li>Returns top 30 results</li>
+                </ul>
+                <h3>Title Fallback</h3>
+                <p>If FTS returns zero results but query terms exist, falls back to matching document titles directly:</p>
+                <ul>
+                    <li>Scans all documents (respecting filters)</li>
+                    <li>If ≥2 query terms match the title (or ≥1 with ≤3 query terms), creates a synthetic chunk entry with score = <code>title_matches * 10.0</code></li>
+                    <li>This ensures documents are findable even when FTS5 has no verbatim matches</li>
+                </ul>
+                <h3>Title Boost & Length Normalization</h3>
+                <p>Every FTS5 result is post-processed:</p>
+                <ul>
+                    <li><strong>Title boost:</strong> <code>+5 × title_matches</code> where title_matches = number of query terms found in the document title</li>
+                    <li><strong>Length normalization:</strong> <code>1.0 / max(1.0, (doc_len / 1000) ^ 0.3)</code> prevents huge documents from dominating BM25 rankings</li>
+                    <li><code>score = bm25_score × length_norm + title_bonus</code></li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>3. Vector Semantic Search</h2>
+                <ul>
+                    <li>Query embedded via Ollama <code>embeddinggemma:latest</code> → 768-dim float32 vector</li>
+                    <li>All candidate chunks loaded from <code>chunk_embeddings</code> BLOB columns (raw float32 pack, 3072 bytes)</li>
+                    <li>Cosine similarity computed in Python (NumPy): <code>cosine_similarity(q, v) = dot(q, v) / (norm(q) × norm(v))</code></li>
+                    <li>Returns top 30 results by similarity score</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>4. RRF Merger</h2>
+                <p><code>Score(d) = 1/(60 + rank_k(d)) + 1/(60 + rank_v(d))</code></p>
+                <ul>
+                    <li>Constant 60 mitigates outlier high ranks</li>
+                    <li>Scores summed across FTS5 + vector result sets</li>
+                    <li>Results sorted by combined score, top 15 returned</li>
+                    <li>Final confidence normalized to 0.0–0.99: <code>min(0.99, rrf_score × 30)</code></li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>5. Context Building</h2>
+                <h3>Per-Document Chunk Limit</h3>
+                <p>Chunks are first sorted by <code>_qscore</code> (hybrid of RRF score + query token overlap ratio):</p>
+                <pre><code>chunk._qscore = score * 0.3 + (query_terms ∩ chunk_terms) / max(query_terms, 1) * 0.7</code></pre>
+                <p>Top 12 chunks are grouped by document, with a maximum of <strong>3 chunks per document</strong>. Within each group, chunks are sorted by chunk_index (chronological page order).</p>
+
+                <h3>Query-Aware Document Ordering</h3>
+                <p>Document groups are sorted by <code>_max_qscore</code> (descending), putting the most query-relevant document first — NOT chronological order. This ensures the LLM sees the most relevant source material first regardless of document date.</p>
+                
+                <h3>RAPTOR Summaries Per-Source</h3>
+                <p>Each document's Level-1 hierarchical summary is fetched from <code>hierarchical_summaries</code> and placed <strong>before</strong> its chunk excerpts in the prompt. The prompt structure for each source:</p>
+                <pre><code>Source [N] (ID: DOC-XXXXXXXX):
+Document Title: {title}
+Document Date: {date}
+  * Summary: {L1 hierarchical summary}
+  * Excerpt (Chunk N, Page X): {chunk text}
+  * Excerpt (Chunk N+1, Page Y): {chunk text}</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>6. LLM Generation</h2>
+                <ul>
+                    <li><strong>System prompt:</strong> Instructs LLM to use <code>[SourceNumber]</code> citations matching source numbers in context, emit no raw doc IDs or HTML, output in clean markdown only</li>
+                    <li><strong>Output format:</strong> Wrapped in <code>&lt;concise&gt;</code> (detailed synthesis) and <code>&lt;elaborate&gt;</code> (deep-dive chronological analysis) XML tags</li>
+                    <li><strong>Post-processing:</strong> If LLM omits XML tags, they are reconstructed: first 3 bullet points → <code>&lt;concise&gt;</code>, full text → <code>&lt;elaborate&gt;</code></li>
+                    <li><strong>Primary:</strong> Ollama <code>gemma3:1b</code> via <code>/api/chat</code> with 120s timeout</li>
+                    <li><strong>Fallback:</strong> Groq <code>llama-3.1-8b-instant</code> (optional, controlled by <code>USE_GROQ_FALLBACK</code> env var)</li>
+                    <li><strong>Translation:</strong> English ↔ Hindi via Ollama, cached per text string, Devanagari script emphasis with natural grammar</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>7. Conflict Detection — <code>conflict.py</code></h2>
+                <p>Scans retrieved document full text for semiconductor parameter patterns and flags contradictions:</p>
+                <table>
+                    <tr><th>Parameter Pattern</th><th>Example Regex</th></tr>
+                    <tr><td>M1 Min Width</td><td><code>Metal\s*1\s*(?:Minimum\s+)?(?:Line\s+)?Width</code></td></tr>
+                    <tr><td>M1 Min Spacing</td><td><code>Metal\s*1\s*(?:Minimum\s+)?Spacing</code></td></tr>
+                    <tr><td>M1 Thickness</td><td><code>Metal\s*1\s*Thickness</code> (Angstrom)</td></tr>
+                    <tr><td>Gate Oxide Thickness</td><td><code>Gate\s*Oxide\s*Thickness</code> (Angstrom)</td></tr>
+                    <tr><td>Wafer Sort Yield</td><td><code>Wafer\s*Sort\s*Yield</code> (percentage — 3 regex variants)</td></tr>
+                    <tr><td>M2 Min Width</td><td><code>Metal\s*2\s*(?:Minimum\s+)?(?:Line\s+)?Width</code></td></tr>
+                    <tr><td>M2 Min Spacing</td><td><code>Metal\s*2\s*(?:Minimum\s+)?Spacing</code></td></tr>
+                </table>
+                <p>When two documents cite different values for the same parameter, a conflict entry is generated with both values, source documents, and context snippets (30 chars before/after match).</p>
+            </div>
+
+            <div class="card">
+                <h2>8. Graph Edge Labels</h2>
+                <p><code>search_helpers.py:get_context_graph()</code> generates edges between documents with a <code>label</code> field:</p>
+                <ul>
+                    <li>Documents that share query terms → edge label shows comma-separated shared terms (truncated to 20 chars)</li>
+                    <li>Documents in the same project → edge label shows <code>project ({name})</code></li>
+                    <li>Documents in the same lot → edge label shows <code>lot ({lot-id})</code></li>
+                    <li>Frontend <code>graph.js</code> renders labels inline on edges with CSS auto-rotation</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Search Filters</h2>
+                <h3>Multi-Select Project Dropdown</h3>
+                <p><code>mkMultiSelect()</code> in <code>app.js</code>:</p>
+                <ul>
+                    <li>Fetches projects from <code>/api/projects</code></li>
+                    <li>Renders checkbox list with project names</li>
+                    <li>Supports multi-selection (OR logic)</li>
+                    <li>Dispatches change to cascade into document filter</li>
+                </ul>
+                <h3>Cascading Document Filter</h3>
+                <p><code>updateDocumentFilter()</code>: When project selection changes, fetches <code>/api/documents?project=id1,id2</code> and populates a second multi-select dropdown.</p>
+                <h3>Date Range Picker</h3>
+                <p>Custom calendar picker with prev/next month navigation. Selected dates sent as <code>date_from</code> and <code>date_to</code> in search FormData.</p>
+            </div>
+
+            <div class="card">
+                <h2>Search History</h2>
+                <p>Per-user search history stored in <code>localStorage</code> keyed by email. Max 5 entries, rendered as clickable chips below the search bar.</p>
+            </div>
+        </section>
+
+        <!-- FRONTEND ARCHITECTURE -->
+        <section id="frontend" class="doc-section">
+            <h1>Frontend Architecture</h1>
+            <p>Single-page application with 5 JavaScript files forming a layered architecture. Pure CSS dark theme with Outfit font.</p>
+
+            <div class="card">
+                <h2>File Architecture</h2>
+                <pre><code>index.html (SPA shell)
+├── static/css/styles.css       (~200 lines) - Base theme CSS
+├── static/js/marked.min.js     - Markdown parser library
+│
+├── static/js/utils.js          (~350 lines) - Shared rendering primitives
+│   ├── parseMD()               Markdown + KaTeX + Mermaid + SVG bar charts
+│   ├── openViewer()            Document viewer (original/OCR modes)
+│   ├── loadAudits()            Audit trail rendering
+│   ├── loadHistory()           Per-user search history (localStorage)
+│   ├── initCitePreview()       Citation hover tooltips (500 char limit)
+│   ├── renderDecisions()       Decision cards
+│   └── copyAI()                Clipboard copy
+│
+├── static/js/app.js            (~1150 lines) - Workspace controller
+│   ├── Auth: handleAuthSubmit(), checkAuth(), showLogin()
+│   ├── Tabs: sidebar navigation system (hover-expand 72px→200px)
+│   ├── Search: form submit, mkMultiSelect(), sanitizeLLM() tag stripping
+│   ├── Upload: drag-drop, parallel XHR, progress rings (CSS conic), polling
+│   ├── Registry: browse projects → documents
+│   └── Theme: dark/light toggle, localStorage persistence
+│
+├── static/js/admin.js          (~600 lines) - Admin panel controller
+│   ├── Dashboard: stats, timeframe toggle, SVG bar charts
+│   ├── CRUD: documents, projects, users
+│   └── Knowledge Map: Cytoscape graph data fetcher
+│
+├── static/js/layout.js         (~150 lines) - Panel layout system
+│   └── initLayout(): resize handles, maximize cards, responsive panels
+│
+└── static/js/graph.js          (~200 lines) - Cytoscape.js graph
+    ├── renderGraph(): node/edge styling, COSE layout
+    ├── Hover: highlights connected neighborhood
+    ├── Click: pins node (prevents layout movement)
+    ├── Double-click doc: opens viewer
+    ├── Edge hover: shows relation type + label
+    └── Edge labels: autorotate CSS text</code></pre>
+            </div>
+
+            <div class="card">
+                <h2><code>utils.js</code> — Shared Rendering</h2>
+                <h3>Markdown Parser — <code>parseMD()</code></h3>
+                <p>Multi-pass rendering pipeline:</p>
+                <ol>
+                    <li>Extract and protect any <code>code</code> blocks (raw passthrough)</li>
+                    <li>Render KaTeX math: <code>$$...$$</code> (block) and <code>$...$</code> (inline)</li>
+                    <li>Render Mermaid diagrams: <code>```mermaid...</code> blocks → SVG</li>
+                    <li>Render <code>[CHART: title | key1: val1 | ...]</code> as inline SVG bar charts</li>
+                    <li>Convert remaining markdown to HTML via <code>marked.parse()</code></li>
+                    <li>Post-render: <code>renderKatex()</code> and <code>renderMermaid()</code> for math/diagrams inside rendered HTML</li>
+                </ol>
+                <h3>Document Viewer — <code>openViewer()</code></h3>
+                <ul>
+                    <li>Fetches document metadata + OCR data from <code>/api/ocr/{id}</code></li>
+                    <li>Two tabs: Original (iframe/image) | OCR (A4 paper layout)</li>
+                    <li>OCR mode: renders markdown pages with prev/next pagination</li>
+                    <li>Status: "OCR Content Unavailable" / "OCR Processing" / page content</li>
+                </ul>
+                <h3>Citation Preview — <code>initCitePreview()</code></h3>
+                <p>Hover on <code>[SourceNumber]</code> links in AI answer → tooltip with truncated snippet (500 char limit), styled with blue left border blockquote.</p>
+            </div>
+
+            <div class="card">
+                <h2><code>app.js</code> — Workspace Controller</h2>
+                <h3>Auth Flow</h3>
+                <ul>
+                    <li>Signup: POST <code>/api/auth/signup</code> with email + name + password</li>
+                    <li>Signin: POST <code>/api/auth/signin</code>, receives <code>{name, email, role}</code></li>
+                    <li>Session: stored in <code>localStorage.scl_auth</code></li>
+                    <li>Admin detection: hides/shows admin-only sidebar links</li>
+                </ul>
+                <h3>Search Submission</h3>
+                <ol>
+                    <li>FormData assembled: query, selected projects, documents, date range, user info</li>
+                    <li>POST to <code>/api/search</code></li>
+                    <li>Response processed: <code>&lt;concise&gt;</code> / <code>&lt;elaborate&gt;</code> XML extracted</li>
+                    <li>CITATION placeholder pattern: <code>__CIT_0__</code> → replaced with rendered citation markers</li>
+                    <li>Conflicts rendered in dedicated panel</li>
+                </ol>
+                <h3>File Upload</h3>
+                <ul>
+                    <li>Drag-and-drop zone with file type validation</li>
+                    <li>Parallel XHR uploads with progress rings (CSS conic gradient)</li>
+                    <li>Polling at 1.5s intervals via <code>pollIngestionStatus()</code></li>
+                    <li>Auto-fade: completed items fade after 3s, errors fade after 3s</li>
+                    <li>Duplicate detection: shows "Duplicate" badge</li>
+                </ul>
+                <h3>Translation</h3>
+                <p>English ↔ Hindi toggle. Results cached per text string to avoid repeated API calls.</p>
+            </div>
+
+            <div class="card">
+                <h2>Sidebar Navigation</h2>
+                <p>Hover-expandable sidebar (72px → 200px) with icon + text labels:</p>
+                <table>
+                    <tr><th>Icon</th><th>Tab</th><th>Content</th></tr>
+                    <tr><td>Search</td><td>Search &amp; Trace</td><td>Query form, AI summary, graph, citations, conflicts</td></tr>
+                    <tr><td>Upload</td><td>Ingest</td><td>File upload with progress queue</td></tr>
+                    <tr><td>Database</td><td>Registry</td><td>Project listing with document browser</td></tr>
+                    <tr><td>Shield</td><td>Audits</td><td>Compliance audit trail table</td></tr>
+                    <tr><td>Settings</td><td>Admin</td><td>Admin panel (admin-only)</td></tr>
+                    <tr><td>Book</td><td>Docs</td><td>System documentation (admin-only)</td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- ADMIN & KNOWLEDGE MAP -->
+        <section id="admin" class="doc-section">
+            <h1>Admin Panel & Knowledge Map</h1>
+            <p>Admin panel at <code>/admin</code> with six sections. Protected: only users with <code>role = "admin"</code> can access.</p>
+
+            <div class="card">
+                <h2>Dashboard — <code>GET /admin/dashboard</code></h2>
+                <ul>
+                    <li>Total documents, projects, chunks, audit logs</li>
+                    <li>Timeframe toggle (weekly/monthly/yearly) for upload count and activity count trends</li>
+                    <li>Bar charts: action type distribution, source type distribution, project distribution (all rendered as SVG)</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Document Management — <code>GET/DELETE /admin/documents</code></h2>
+                <ul>
+                    <li>Paginated list with limit/offset, project filter, sorted by created_at DESC</li>
+                    <li>Delete document: cascade removes OCR sidecars, chunk embeddings, lineage edges, hierarchical summaries</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Project Management — <code>GET/DELETE /admin/projects</code></h2>
+                <ul>
+                    <li>Aggregate per project: doc count, total file size, last updated timestamp</li>
+                    <li>Cascade delete: removes all project documents + OCR sidecars + embeddings + lineage + summaries</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Audits — <code>GET /admin/audits</code></h2>
+                <ul>
+                    <li>Paginated: limit (default 100), offset</li>
+                    <li>Returns: timestamp, username, action_type, details, current_hash</li>
+                    <li>Includes total count for pagination UI</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>User Directory — <code>GET/POST/DELETE/PUT /admin/users</code></h2>
+                <ul>
+                    <li>List all users with email, name, role</li>
+                    <li>Add user: email, name, password (salted SHA-256), role (admin/user)</li>
+                    <li>Delete user by email</li>
+                    <li>Update role: toggle between admin and user via PUT with role JSON</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>Knowledge Map — <code>GET /admin/knowledge-map?project=X</code></h2>
+                <p>Returns raw graph data (not rendered — the frontend admin.js renders it via Cytoscape.js):</p>
+                <pre><code>{
+  "projects": ["proj1", "proj2"],
+  "documents": [{id, title, project_id, date, lot_id}],
+  "decisions": [{id, meeting_id, summary, status, type}],
+  "lineage": [{from_node_id, to_node_id, relation_type, rationale}]
+}</code></pre>
+                <h3>Node Types (Cytoscape.js rendering)</h3>
+                <table>
+                    <tr><th>Type</th><th>Color</th><th>Double-click Action</th></tr>
+                    <tr><td>Project</td><td>Blue border</td><td>None</td></tr>
+                    <tr><td>Document</td><td>Green border</td><td>Opens document viewer</td></tr>
+                    <tr><td>Decision</td><td>Amber border</td><td>None</td></tr>
+                </table>
+                <h3>Edge Types</h3>
+                <table>
+                    <tr><th>Type</th><th>Color</th><th>Meaning</th></tr>
+                    <tr><td><code>project_to_doc</code></td><td>Blue</td><td>Document belongs to project</td></tr>
+                    <tr><td><code>doc_to_dec</code></td><td>Amber</td><td>Decision associated with document</td></tr>
+                    <tr><td><code>lineage</code></td><td>Red dashed</td><td>Document references another</td></tr>
+                </table>
+                <h3>Interactions</h3>
+                <ul>
+                    <li>Hover: highlights connected neighborhood</li>
+                    <li>Click: pins node (prevents layout movement)</li>
+                    <li>Double-click document: opens viewer</li>
+                    <li>Background click: clears selection</li>
+                    <li>Edge hover: shows relation type and rationale</li>
+                    <li>Layout: COSE algorithm (<code>nodeRepulsion: 600000</code>, <code>idealEdgeLength: 140</code>)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- DATABASE SCHEMA -->
         <section id="schema" class="doc-section">
             <h1>Database Schema</h1>
-            <p>SQLite schema structure representing tables used for persistent document storage, PageIndex vector indexes, chronological lineage tracking, and compliance audit logs.</p>
+            <p>SQLite schema with FTS5 virtual tables, BLOB vector storage, SHA-256 audit chain, and auto-sync triggers.</p>
 
             <div class="card">
-                <h2>Entity Relationship Diagram (ERD)</h2>
+                <h2>Entity Relationship Diagram</h2>
                 <div class="mermaid">
                 erDiagram
                     users ||--o{ audit_logs : generates
@@ -446,7 +805,9 @@ hosted/models/ocr/dict.txt</pre>
                     meetings ||--o{ decisions : contains
                     meetings ||--o{ lineage : links
                     meetings ||--o{ hierarchical_summaries : summarizes
-                    
+                    chunks ||--o| chunk_embeddings : embeds
+                    chunks ||--o| chunks_fts : indexes-virtual
+
                     users {
                         string email PK
                         string name
@@ -473,6 +834,7 @@ hosted/models/ocr/dict.txt</pre>
                         string ocr_engine
                         integer page_count
                         string uploaded_by
+                        string status
                     }
                     chunks {
                         string id PK
@@ -480,6 +842,10 @@ hosted/models/ocr/dict.txt</pre>
                         integer chunk_index
                         string chunk_text
                         integer page_number
+                    }
+                    chunk_embeddings {
+                        string chunk_id PK
+                        blob vector
                     }
                     decisions {
                         string id PK
@@ -515,237 +881,277 @@ hosted/models/ocr/dict.txt</pre>
             </div>
 
             <div class="card">
-                <h2>Table Definitions</h2>
+                <h2>Table Details</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Table Name</th>
-                            <th>Field</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><b>users</b></td>
-                            <td>email, name, password_hash, salt, role</td>
-                            <td>TEXT (PK), TEXT, TEXT, TEXT, TEXT</td>
-                            <td>Authorized application users and access levels (admin/user).</td>
-                        </tr>
-                        <tr>
-                            <td><b>meetings</b></td>
-                            <td>id, title, date, lot_id, project_id, file_path, file_size_bytes, transcript_text, source_type, content_hash, created_at, ocr_quality, corrections_count, ocr_json, ocr_markdown, ocr_engine, page_count, uploaded_by</td>
-                            <td>TEXT (PK), TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT, TEXT, TEXT, INTEGER, TEXT</td>
-                            <td>Ingested source documents (PDFs, DOCX, XLSX, Images), structural page counts, and full OCR transcripts.</td>
-                        </tr>
-                        <tr>
-                            <td><b>chunks</b></td>
-                            <td>id, meeting_id, chunk_index, chunk_text, page_number</td>
-                            <td>TEXT (PK), TEXT (FK), INTEGER, TEXT, INTEGER</td>
-                            <td>PageIndex page-aware text passages mapped with their physical page boundaries.</td>
-                        </tr>
-                        <tr>
-                            <td><b>decisions</b></td>
-                            <td>id, meeting_id, summary, status, type</td>
-                            <td>TEXT (PK), TEXT (FK), TEXT, TEXT, TEXT</td>
-                            <td>Structured parameters and critical specifications extracted from document transcripts.</td>
-                        </tr>
-                        <tr>
-                            <td><b>lineage</b></td>
-                            <td>from_node_id, to_node_id, relation_type, rationale</td>
-                            <td>TEXT (PK), TEXT (PK), TEXT, TEXT</td>
-                            <td>Causal lineage connections and justifications between documents, forming the Cytoscape process visualizer.</td>
-                        </tr>
-                        <tr>
-                            <td><b>hierarchical_summaries</b></td>
-                            <td>id, project_id, level, summary_text, source_ids</td>
-                            <td>TEXT (PK), TEXT, INTEGER, TEXT, TEXT</td>
-                            <td>Multi-level hierarchical summaries of projects and lots for RAG reference.</td>
-                        </tr>
-                        <tr>
-                            <td><b>audit_logs</b></td>
-                            <td>id, timestamp, username, department, action_type, details, parent_hash, current_hash</td>
-                            <td>INTEGER (PK), TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT</td>
-                            <td>Cryptographic, tamper-evident audit logs representing chronological system modifications.</td>
-                        </tr>
-                    </tbody>
+                    <tr><th>Table</th><th>Rows (est.)</th><th>Key Details</th></tr>
+                    <tr><td><code>meetings</code></td><td>1 per doc</td><td>20 columns. <code>status</code>: pending/completed/failed. <code>content_hash</code>: SHA-256 dedup key. <code>transcript_text</code>: full extracted text or error message. <code>ocr_engine</code>: "native" | engine name | None. <code>lot_id</code>: auto-generated LOT-{YYYY-MM}-{last4}.</td></tr>
+                    <tr><td><code>chunks</code></td><td>~10 per doc</td><td>6 columns. 800-char windows with 200-char overlap. <code>page_number</code>: page-aware tracking. FTS sync via 3 triggers (INSERT/UPDATE/DELETE).</td></tr>
+                    <tr><td><code>chunks_fts</code></td><td>Virtual</td><td>FTS5 with <code>porter unicode61</code> tokenizer on <code>chunk_text</code>. Content-synced to <code>chunks</code> via rowid.</td></tr>
+                    <tr><td><code>chunk_embeddings</code></td><td>1 per chunk</td><td><code>chunk_id</code> TEXT PK, <code>vector</code> BLOB (packed float32 array, 768×4 = 3072 bytes)</td></tr>
+                    <tr><td><code>lineage</code></td><td>1 per edge</td><td>Composite PK (from_node, to_node). <code>relation_type</code>: reference/derived/supersedes.</td></tr>
+                    <tr><td><code>hierarchical_summaries</code></td><td>1 per doc + 1 per project</td><td><code>level</code>: 1 (per-doc) or 2 (per-project). <code>source_ids</code>: comma-separated doc IDs.</td></tr>
+                    <tr><td><code>hierarchical_summaries_fts</code></td><td>Virtual</td><td>FTS5 on <code>summary_text</code> with porter tokenizer. 3 triggers auto-sync.</td></tr>
+                    <tr><td><code>audit_logs</code></td><td>1 per action</td><td>8 columns. <code>parent_hash</code> → previous <code>current_hash</code>: SHA-256 tamper-evident chain.</td></tr>
+                    <tr><td><code>users</code></td><td>1 per user</td><td>5 columns. Password: SHA-256 with random 32-byte hex salt. First user = admin.</td></tr>
+                    <tr><td><code>decisions</code></td><td>0 (schema only)</td><td>Auto-population is roadmap. Columns: summary, status, type.</td></tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Performance Indexes</h2>
+                <p>Created automatically on startup:</p>
+                <pre><code>CREATE INDEX idx_meetings_project ON meetings(project_id);
+CREATE INDEX idx_meetings_status ON meetings(status);
+CREATE INDEX idx_meetings_created ON meetings(created_at);
+CREATE INDEX idx_chunks_meeting ON chunks(meeting_id);</code></pre>
+            </div>
+
+            <div class="card">
+                <h2>Schema Migration Strategy</h2>
+                <p><code>database.py</code> uses try/except <code>ALTER TABLE ... ADD COLUMN</code> for idempotent migrations on startup. Foreign keys enabled via <code>PRAGMA foreign_keys = ON</code>.</p>
+            </div>
+        </section>
+
+        <!-- AUDIT LEDGER -->
+        <section id="audit" class="doc-section">
+            <h1>Audit Ledger</h1>
+            <p>Cryptographically chained, tamper-evident audit log using SHA-256 block hashing.</p>
+
+            <div class="card">
+                <h2>Chain Structure</h2>
+                <div class="mermaid">
+                graph LR
+                    Genesis[Genesis Block<br/>parent_hash: "GENESIS"] --> Block1[Block 1<br/>parent_hash: hash0<br/>current_hash: hash1]
+                    Block1 --> Block2[Block 2<br/>parent_hash: hash1<br/>current_hash: hash2]
+                    Block2 --> Block3[Block N<br/>parent_hash: hashN-1<br/>current_hash: hashN]
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Hash Calculation</h2>
+                <pre><code>import hashlib
+raw = (timestamp + username + department + action_type + details + parent_hash).encode("utf-8")
+current_hash = hashlib.sha256(raw).hexdigest()</code></pre>
+                <p>The <code>parent_hash</code> of each new entry is the previous entry's <code>current_hash</code>: <code>SELECT current_hash FROM audit_logs ORDER BY id DESC LIMIT 1</code>.</p>
+                <p>The first entry uses <code>"GENESIS"</code> as its <code>parent_hash</code>.</p>
+            </div>
+
+            <div class="card">
+                <h2>Verification — <code>verify_audit_ledger()</code></h2>
+                <p>Iterates all entries in ID-ascending order:</p>
+                <ol>
+                    <li>Check that <code>parent_hash</code> of entry N matches <code>current_hash</code> of entry N-1</li>
+                    <li>Recalculate <code>SHA-256(timestamp + username + ... + parent_hash)</code> and confirm it matches stored <code>current_hash</code></li>
+                    <li>Return <code>{valid: true, count: N}</code> or <code>{valid: false, failed_id: N}</code></li>
+                </ol>
+                <p>API: <code>POST /api/audit_logs/verify</code> returns verification result.</p>
+            </div>
+
+            <div class="card">
+                <h2>Audit Triggers</h2>
+                <table>
+                    <tr><th>Action</th><th>Trigger</th><th>Details Include</th></tr>
+                    <tr><td><code>SIGNUP</code></td><td>User registration</td><td>Email address</td></tr>
+                    <tr><td><code>SIGNIN</code></td><td>User login</td><td>Email address</td></tr>
+                    <tr><td><code>QUERY</code></td><td>Every search</td><td>Query text, project filters, document filters</td></tr>
+                    <tr><td><code>UPLOAD</code></td><td>After background processing</td><td>Filename, doc_id, size, chunk count, engine name, project</td></tr>
+                    <tr><td><code>OCR_CORRECT</code></td><td>Manual OCR correction</td><td>Doc ID, correction details</td></tr>
                 </table>
             </div>
         </section>
 
-        <!-- CONFIGURATIONS TAB -->
-        <section id="customization" class="doc-section">
-            <h1>Configuration & Customization</h1>
-            <p>Guidelines to modify system components, swap databases, and adjust LLM parameters.</p>
+        <!-- API REFERENCE -->
+        <section id="api" class="doc-section">
+            <h1>API Reference</h1>
+            <p>Complete endpoint reference with methods, parameters, and response shapes. API key auth via <code>Authorization: Bearer {SCL_API_KEY}</code> optional.</p>
 
             <div class="card">
-                <h2>1. Swapping SQLite with PostgreSQL (PGVector)</h2>
-                <p>To upgrade to a production PostgreSQL database, modify <code>database.py</code> to use a PostgreSQL connection string instead of local SQLite:</p>
-                <pre><code># In database.py
-import psycopg2
-
-def get_db_connection():
-    # Replace SQLite connection with PostgreSQL
-    return psycopg2.connect("postgresql://user:password@localhost:5432/scribelink")
-</code></pre>
-                <p>To support vectors, enable the PGVector extension in PostgreSQL:</p>
-                <pre><code>CREATE EXTENSION IF NOT EXISTS vector;
-CREATE TABLE chunk_embeddings (
-    chunk_id INT REFERENCES document_chunks(id) ON DELETE CASCADE,
-    vector vector(768)
-);</code></pre>
+                <h2>Search & Documents</h2>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/search</span>
+                    <div class="params"><strong>Form Params:</strong> query (str*), project (str, comma-sep), document (str, comma-sep), date_from (str), date_to (str), user (str), user_dept (str)</div>
+                    <div class="desc">Returns <code>{answer (string with &lt;concise&gt;/&lt;elaborate&gt;), citations[{meeting_id, meeting_title, text, page_number, confidence}], graph{nodes[], edges[], decisions[]}, conflicts[{parameter, values[{value, doc_id, title, snippet}]}]}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/upload</span>
+                    <div class="params"><strong>Form Params:</strong> file (file*), project_id (str*), user (str), user_dept (str)</div>
+                    <div class="desc">Returns <code>{status: "success"|"duplicate", document_id, state: "processing"}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/document/{doc_id}</span>
+                    <div class="desc">Returns document metadata JSON (id, title, date, lot_id, project_id, file_path, file_size_bytes, transcript_text, source_type, created_at, ocr_quality, corrections_count, ocr_json, ocr_markdown, ocr_engine, page_count)</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/preview/{doc_id}</span>
+                    <div class="desc">Returns file content for inline preview. PDF/images → FileResponse. DOCX → HTML conversion with A4 styling. TXT → HTML with monospace pre-wrap.</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/download/{doc_id}</span>
+                    <div class="desc">Returns file as attachment download with original filename.</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/ocr/{doc_id}</span>
+                    <div class="desc">Returns <code>{doc_id, title, ocr_text, engine, original_url, created_at, file_size_bytes, corrections_count, pages[{page_num, markdown, text, blocks, images, metadata, engine}]}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/originals/{filename}</span>
+                    <div class="desc">Returns static file from <code>static/originals/</code> as FileResponse.</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/documents?project=id1,id2</span>
+                    <div class="desc">Returns <code>{documents: [{id, title, project_id}]}</code> — filtered by project(s), sorted by title ASC.</div>
+                </div>
             </div>
 
             <div class="card">
-                <h2>2. Adjusting LLM & Embedding Models</h2>
-                <p>Modify <code>config.py</code> to target different local Ollama models (e.g., Llama 3, Qwen 2.5) or adjust API endpoints:</p>
-                <pre><code># In config.py
-OLLAMA_BASE_URL = "http://localhost:11434"
-LLM_MODEL = "gemma3:1b"           # Generation model
-EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
-</code></pre>
+                <h2>Registry</h2>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/registry?limit=50&offset=0</span>
+                    <div class="desc"><code>{projects: [{project_id, doc_count, last_updated}], total}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/registry/{project_id}/documents?sort=date&source_type=&title=&date_from=&date_to=&limit=50&offset=0</span>
+                    <div class="desc"><code>{documents: [{id, title, date, lot_id, project_id, file_path, file_size_bytes, source_type, created_at, ocr_quality, corrections_count, uploaded_by}], total}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/registry/{project_id}/activity</span>
+                    <div class="desc"><code>{documents: [...], logs: [{timestamp, username, action_type, details}]}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span><span class="path">/api/projects</span>
+                    <div class="desc"><code>{projects: [{id, name, description}], lots: [{id, name, date}]}</code> — all unique projects and lots derived from meetings table.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Auth</h2>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/auth/signup</span>
+                    <div class="params"><strong>Form Params:</strong> email (str*), name (str*), password (str*)</div>
+                    <div class="desc"><code>{status: "success", user: {email, name, role}}</code> — first user gets admin.</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/auth/signin</span>
+                    <div class="params"><strong>Form Params:</strong> email (str*), password (str*)</div>
+                    <div class="desc"><code>{status: "success", user: {email, name, role}}</code></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Admin</h2>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/dashboard</span><div class="desc">Stats object with total_docs, total_projects, total_chunks, total_audits, timeframe_stats (uploads + activity weekly/monthly/yearly), action_stats, project_stats, source_stats</div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/audits?limit=100&offset=0</span><div class="desc">Paginated audit log with total count</div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/documents?limit=50&offset=0&project=X</span><div class="desc">Paginated document list</div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/projects</span><div class="desc">Project aggregate stats</div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/knowledge-map?project=X</span><div class="desc"><code>{projects[], documents[], decisions[], lineage[]}</code></div></div>
+                <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/admin/projects/{id}</span><div class="desc">Cascade delete project + all docs + sidecars + embeddings + lineage + summaries</div></div>
+                <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/admin/documents/{id}</span><div class="desc">Cascade delete document + sidecar + embeddings + lineage + summary</div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/admin/users</span><div class="desc"><code>{users: [{email, name, role}]}</code></div></div>
+                <div class="endpoint"><span class="method post">POST</span><span class="path">/admin/users</span><div class="params"><strong>JSON Body:</strong> {email (str*), name (str*), password (str*), role ("admin"|"user")}</div></div>
+                <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/admin/users/{email}</span></div>
+                <div class="endpoint"><span class="method put">PUT</span><span class="path">/admin/users/{email}/role</span><div class="params"><strong>JSON Body:</strong> {role: "admin"|"user"}</div></div>
+            </div>
+
+            <div class="card">
+                <h2>Lineage</h2>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/lineage/create</span>
+                    <div class="params"><strong>Form Params:</strong> from_node_id (str*), to_node_id (str*), relation_type (str, default "followed_by"), rationale (str), user (str), user_dept (str)</div>
+                    <div class="desc"><code>{status: "created", label}</code></div>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/lineage/delete</span>
+                    <div class="params"><strong>Form Params:</strong> from_node_id (str*), to_node_id (str*), user (str), user_dept (str)</div>
+                    <div class="desc"><code>{status: "deleted"}</code></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Translation</h2>
+                <div class="endpoint">
+                    <span class="method post">POST</span><span class="path">/api/translate</span>
+                    <div class="params"><strong>JSON Body:</strong> {text (str*), target_lang ("Hindi"*)}</div>
+                    <div class="desc"><code>{status: "success", translated_text}</code>. Supported: English → Hindi (Devanagari).</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Health & Audit</h2>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/health</span><div class="desc"><code>{status: "ok", documents: N, chunks: N}</code></div></div>
+                <div class="endpoint"><span class="method get">GET</span><span class="path">/api/audit_logs</span><div class="desc"><code>{logs: [{timestamp, username, department, action_type, details, current_hash}]}</code> — last 50 entries, newest first.</div></div>
+                <div class="endpoint"><span class="method post">POST</span><span class="path">/api/audit_logs/verify</span><div class="desc"><code>{valid: true|false, count: N, failed_id: N}</code></div></div>
             </div>
         </section>
 
-        <!-- CODEBASE EXPLORER TAB -->
-        <section id="codebase" class="doc-section">
-            <h1>Codebase Explorer</h1>
-            <p>Interactive repository structure. Select any file inside the folders to inspect its architecture, functions, and module integration.</p>
+        <!-- CONFIGURATION -->
+        <section id="config" class="doc-section">
+            <h1>Configuration</h1>
+            <p>Environment variables, model configuration, database swapping, and customization guide.</p>
 
-            <div class="codebase-layout">
-                <!-- Left Sidebar File Tree -->
-                <div class="file-tree">
-                    <!-- Root Folder: app -->
-                    <div class="folder-group">
-                        <div class="folder-trigger" onclick="toggleFolder(this)">
-                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
-                            <i data-lucide="folder" style="color: #eab308;"></i>
-                            <span>scribelink_app</span>
-                        </div>
-                        <div class="folder-content">
-                            <div class="file-tree-item" onclick="selectFile('main.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>main.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('config.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>config.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('database.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>database.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('embedder.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>embedder.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('vector_store.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>vector_store.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('llm_client.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>llm_client.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('search_engine.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>search_engine.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('ocr_engine.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>ocr_engine.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('summarizer.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>summarizer.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('ollama_runner.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>ollama_runner.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('lineage.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>lineage.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('audit_ledger.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>audit_ledger.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('conflict.py', this)">
-                                <i data-lucide="file-code" style="color: #ef4444;"></i>
-                                <span>conflict.py</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                        </div>
-                    </div>
+            <div class="card">
+                <h2>Environment Variables</h2>
+                <table>
+                    <tr><th>Variable</th><th>Default</th><th>Required</th><th>Description</th></tr>
+                    <tr><td><code>OLLAMA_BASE_URL</code></td><td><code>http://localhost:11434</code></td><td>No</td><td>Ollama server endpoint</td></tr>
+                    <tr><td><code>LLM_MODEL</code></td><td><code>gemma3:1b</code></td><td>No</td><td>Model for chat generation</td></tr>
+                    <tr><td><code>EMBEDDING_MODEL</code></td><td><code>embeddinggemma:latest</code></td><td>No</td><td>Model for text embeddings (768-dim)</td></tr>
+                    <tr><td><code>GROQ_API_KEY</code></td><td><code>""</code></td><td>If fallback enabled</td><td>Groq API key for cloud fallback</td></tr>
+                    <tr><td><code>GROQ_MODEL</code></td><td><code>llama-3.1-8b-instant</code></td><td>No</td><td>Groq model name</td></tr>
+                    <tr><td><code>USE_GROQ_FALLBACK</code></td><td><code>false</code></td><td>No</td><td>Enable Groq when Ollama returns no response</td></tr>
+                    <tr><td><code>DATABASE_URL</code></td><td><code>""</code></td><td>No</td><td>PostgreSQL connection string (blank = SQLite)</td></tr>
+                    <tr><td><code>SCL_API_KEY</code></td><td><code>""</code></td><td>No</td><td>Bearer token for external API auth</td></tr>
+                    <tr><td><code>SCL_RELOAD</code></td><td><code>false</code></td><td>No</td><td>Set to <code>true</code> to enable uvicorn auto-reload during development</td></tr>
+                </table>
+            </div>
 
-                    <!-- Folder: static/js -->
-                    <div class="folder-group">
-                        <div class="folder-trigger" onclick="toggleFolder(this)">
-                            <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
-                            <i data-lucide="folder" style="color: #eab308;"></i>
-                            <span>static/js</span>
-                        </div>
-                        <div class="folder-content">
-                            <div class="file-tree-item" onclick="selectFile('static/js/app.js', this)">
-                                <i data-lucide="file-json" style="color: #3b82f6;"></i>
-                                <span>app.js</span>
-                                <span class="badge-status modified" style="margin-left: auto;">modified</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('static/js/layout.js', this)">
-                                <i data-lucide="file-json" style="color: #3b82f6;"></i>
-                                <span>layout.js</span>
-                                <span class="badge-status modified" style="margin-left: auto;">modified</span>
-                            </div>
-                            <div class="file-tree-item" onclick="selectFile('static/js/graph.js', this)">
-                                <i data-lucide="file-json" style="color: #3b82f6;"></i>
-                                <span>graph.js</span>
-                                <span class="badge-status stable" style="margin-left: auto;">stable</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="card">
+                <h2>Switching to PostgreSQL</h2>
+                <p>Set <code>DATABASE_URL</code> env var to a PostgreSQL connection string. The <code>db_adapter.py</code> auto-detects and switches:</p>
+                <pre><code># db_adapter.py dual-mode logic
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+if DATABASE_URL:
+    conn = psycopg2.connect(DATABASE_URL)
+    # %s placeholders used instead of ?
+else:
+    conn = sqlite3.connect(db_path)
+    # ? placeholders used
+    conn.execute("PRAGMA foreign_keys = ON")</code></pre>
+            </div>
 
-                <!-- Vertical Line Split -->
-                <div class="tree-divider"></div>
+            <div class="card">
+                <h2>Swapping LLM Models</h2>
+                <p>Set env vars or edit <code>config.py</code>:</p>
+                <pre><code>LLM_MODEL = "gemma3:1b"           # or "llama3.2:1b", "qwen2.5:1.5b", "gemma3:4b"
+EMBEDDING_MODEL = "embeddinggemma:latest"  # or "nomic-embed-text", "all-minilm"</code></pre>
+                <p>The <code>ollama_runner.py</code> self-healing manager ensures Ollama is running before any call:</p>
+                <pre><code>def ensure_ollama_running():
+    # Check port 11434
+    # If not responding, spawn ollama serve in background thread
+    # Cross-platform: macOS/Linux/Windows</code></pre>
+            </div>
 
-                <!-- Right Detail Pane -->
-                <div class="file-content-pane" id="file-inspector">
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--text-muted);">
-                        <i data-lucide="file-question" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
-                        <p style="font-size: 14px;">Select a file from the repository tree to inspect its modules and integration architecture.</p>
-                    </div>
-                </div>
+            <div class="card">
+                <h2>Custom OCR Models</h2>
+                <p>Drop PP-OCRv5 ONNX weights for improved OCR accuracy (auto-detected on startup):</p>
+                <pre><code>models/ocr/det.onnx     # Detection model
+models/ocr/rec.onnx     # Recognition model
+models/ocr/dict.txt     # Character dictionary</code></pre>
+                <p>Download from <a href="https://huggingface.co/monkt/paddleocr-onnx" style="color:var(--primary);">monkt/paddleocr-onnx</a>.</p>
             </div>
         </section>
     </main>
 
     <script>
         lucide.createIcons();
-        // Turn off startOnLoad to prevent rendering NaN on hidden tabs
         mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
         function showTab(tabId) {
             document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
-            
-            // Render Mermaid ONLY on elements inside the now-visible tab
-            if (tabId === 'architecture' || tabId === 'pipelines' || tabId === 'schema') {
+            const tabsWithDiagrams = ['architecture', 'ingestion', 'ocr', 'search', 'schema', 'audit'];
+            if (tabsWithDiagrams.includes(tabId)) {
                 try {
                     mermaid.init(undefined, document.querySelectorAll(`#${tabId} .mermaid`));
                 } catch (err) {
@@ -754,7 +1160,6 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
             }
         }
 
-        // Initialize default visible tab diagrams
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => {
                 try {
@@ -764,216 +1169,6 @@ EMBEDDING_MODEL = "embeddinggemma:latest" # Embedding model
                 }
             }, 100);
         });
-
-        function toggleFolder(el) {
-            const content = el.nextElementSibling;
-            const icon = el.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
-            if (content.style.display === 'none') {
-                content.style.display = 'flex';
-                el.innerHTML = el.innerHTML.replace('chevron-right', 'chevron-down');
-            } else {
-                content.style.display = 'none';
-                el.innerHTML = el.innerHTML.replace('chevron-down', 'chevron-right');
-            }
-            lucide.createIcons();
-        }
-
-        const filesData = {
-            "config.py": {
-                title: "config.py",
-                desc: "Configuration file defining the endpoints and local model identifiers for the air-gapped system.",
-                roles: "System Configuration & Constants",
-                functions: [
-                    { name: "OLLAMA_BASE_URL", purpose: "Endpoint of the local Ollama daemon service (Default: http://localhost:11434)." },
-                    { name: "LLM_MODEL", purpose: "Model used for chat generation and question-answering ('gemma3:1b')." },
-                    { name: "EMBEDDING_MODEL", purpose: "Model used for semantic dense vector calculations ('embeddinggemma:latest')." }
-                ],
-                integration: "Imported by llm_client.py, embedder.py, and search_engine.py to dynamically target local model ports."
-            },
-            "database.py": {
-                title: "database.py",
-                desc: "Manages the persistent database connection pool (SQLite) and background schema/indexing setup.",
-                roles: "Persistence & Schema Management",
-                functions: [
-                    { name: "get_db_connection()", purpose: "Returns a thread-safe connection object to the local SQLite database file (app.db)." },
-                    { name: "init_db()", purpose: "Initializes the required tables on startup and launches the background thread for model embedding generation." }
-                ],
-                integration: "Wired into main.py (startup) and called by vector_store.py and search_engine.py to run SQL queries."
-            },
-            "embedder.py": {
-                title: "embedder.py",
-                desc: "Generates semantic text vector embeddings locally using Ollama's embeddings API.",
-                roles: "Vector Embeddings API Client",
-                functions: [
-                    { name: "get_embedding(text)", purpose: "Sends the chunk text to Ollama /api/embeddings and returns a 768-dimensional float32 vector." }
-                ],
-                integration: "Called by database.py during startup to vectorize unindexed chunk lists and by main.py during file upload parsing."
-            },
-            "vector_store.py": {
-                title: "vector_store.py",
-                desc: "Handles saving, loading, and performing local cosine-similarity dense search over chunks.",
-                roles: "Local Vector Store Engine",
-                functions: [
-                    { name: "store_embedding(chunk_id, vector)", purpose: "Packs a float32 array into a compact binary BLOB using struct.pack and saves it to SQLite." },
-                    { name: "vector_search(query_vector, project_id, limit)", purpose: "Loads packed vectors, calculates cosine similarity using NumPy math, and ranks top chunks." }
-                ],
-                integration: "Called by search_engine.py to merge dense semantic search results with classical full-text search."
-            },
-            "llm_client.py": {
-                title: "llm_client.py",
-                desc: "Sends prompt requests to the local Ollama completion engine and performs Hindi translations.",
-                roles: "Ollama LLM Complete Client",
-                functions: [
-                    { name: "complete_llm(system, prompt)", purpose: "Sends structured templates to Ollama's /api/chat endpoint and yields text generators." },
-                    { name: "translate_to_hindi(text)", purpose: "Asks the local model to translate English generated outputs to clean Hindi." }
-                ],
-                integration: "Called by search_engine.py to format final QA reports and translate responses on client request."
-            },
-            "ocr_engine.py": {
-                title: "ocr_engine.py",
-                desc: "Handles scanned page text extraction offline using the RapidOCR ONNX model library.",
-                roles: "Scanned Page OCR Parser",
-                functions: [
-                    { name: "ocr_image(img_path)", purpose: "Runs ONNX models to extract bounding boxes and text from scans/photos." }
-                ],
-                integration: "Imports opencv-python-headless to load images and feeds outputs directly back to the database ingestion stream."
-            },
-            "search_engine.py": {
-                title: "search_engine.py",
-                desc: "Combines FTS5 keyword matching and vector matching using RRF (Reciprocal Rank Fusion).",
-                roles: "Hybrid Search Combiner & QA Engine",
-                functions: [
-                    { name: "hybrid_search(query, project_id)", purpose: "Combines Keyword & Vector ranks, applies RRF scoring, and formats final outputs." }
-                ],
-                integration: "Called directly by main.py's /api/search API endpoint to serve query search requests."
-            },
-            "summarizer.py": {
-                title: "summarizer.py",
-                desc: "Background worker that generates level-1 (document) and level-2 (project) summaries.",
-                roles: "Hierarchical Document Summarizer",
-                functions: [
-                    { name: "summarize_document(meeting_id)", purpose: "Builds a concise summary of a document's passages using the local LLM." }
-                ],
-                integration: "Spins up a background daemon thread on server startup to summarize any unsummarized documents."
-            },
-            "ollama_runner.py": {
-                title: "ollama_runner.py",
-                desc: "Ensures that the local Ollama backend is running by checking port connectivity and automatically launching the daemon service in the background on startup, ingest, or query events.",
-                roles: "Ollama Daemon Auto-Runner",
-                functions: [
-                    { name: "ensure_ollama_running()", purpose: "Checks if Ollama is listening and dynamically spawns it in a cross-platform background thread if not active." }
-                ],
-                integration: "Called during startup (main.py), embedding (embedder.py), and LLM generation (llm_client.py)."
-            },
-            "lineage.py": {
-                title: "lineage.py",
-                desc: "Manages document relationship links and generates causal lineage edges.",
-                roles: "Causal Relation Edge Builder",
-                functions: [
-                    { name: "create_edge(src, tgt, type)", purpose: "Creates relation edges in database." },
-                    { name: "auto_edges()", purpose: "Dynamically maps matching properties into lineage edges." }
-                ],
-                integration: "Called by startup triggers and API endpoints to supply nodes to the Cytoscape.js visualizer."
-            },
-            "audit_ledger.py": {
-                title: "audit_ledger.py",
-                desc: "Logs queries, upload actions, and system updates to an immutable, cryptographically chained log using SHA-256 block hashing.",
-                roles: "Immutable Activity Auditor",
-                functions: [
-                    { name: "log_audit(act, det, usr)", purpose: "Calculates SHA-256 block hash linked to the previous block and logs audit info." },
-                    { name: "verify_audit_ledger()", purpose: "Verifies chain integrity by recalculating and checking hashes recursively." }
-                ],
-                integration: "Wired into main upload and search API route parameters."
-            },
-            "conflict.py": {
-                title: "conflict.py",
-                desc: "Performs overlap analysis on new ingestion text chunks against database records to detect possible duplicate entries.",
-                roles: "Ingestion Collision Checker",
-                functions: [
-                    { name: "detect_conflicts(text)", purpose: "Calculates semantic cosine similarity and chunk overlap to report potential duplicates." }
-                ],
-                integration: "Called during document uploads inside main.py to raise warning alerts."
-            },
-            "main.py": {
-                title: "main.py",
-                desc: "Entry point of the FastAPI application. Sets up routers, mounts static directories, and exposes API endpoints.",
-                roles: "FastAPI Routing Entry Point",
-                functions: [
-                    { name: "/api/search", purpose: "Endpoint executing hybrid search queries." },
-                    { name: "/api/upload", purpose: "Endpoint accepting document file uploads." }
-                ],
-                integration: "Imports search_engine.py, database.py, and admin.py. Serves index.html and docs.html."
-            },
-            "static/js/app.js": {
-                title: "app.js",
-                desc: "Manages core workspace interface: state changes, tab switches, file ingestion updates, and user login/authentication.",
-                roles: "Frontend Client Controller",
-                functions: [
-                    { name: "checkAuth()", purpose: "Checks localStorage role data and redirects non-admins away from administrative pages." }
-                ],
-                integration: "Wired into index.html. Coordinates API requests to main.py endpoints."
-            },
-            "static/js/layout.js": {
-                title: "layout.js",
-                desc: "Maintains panel layout states: resizing, sidebar adjustments, and full-screen maximization updates.",
-                roles: "Responsive Interface Adjuster",
-                functions: [
-                    { name: "initLayout()", purpose: "Hooks mouse resize listeners to dividers and dynamic grid rows for maximized cards." }
-                ],
-                integration: "Wired into index.html and admin.html templates."
-            },
-            "static/js/graph.js": {
-                title: "graph.js",
-                desc: "Draws visual interactive Cytoscape network diagrams representing document connections.",
-                roles: "Cytoscape Network Graph Drawer",
-                functions: [
-                    { name: "renderGraph(data)", purpose: "Builds network edges, configures node styles, and wires double-click handlers to open previews." }
-                ],
-                integration: "Imports Cytoscape libraries and links directly to index.html workspace cards."
-            }
-        };
-
-        function selectFile(filename, el) {
-            document.querySelectorAll('.file-tree-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-
-            const info = filesData[filename];
-            const container = document.getElementById('file-inspector');
-            if (!info) return;
-
-            let functionsHtml = '';
-            info.functions.forEach(f => {
-                functionsHtml += `
-                    <div style="margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px;">
-                        <code style="font-size: 13px; color: var(--primary); font-weight: 700;">${f.name}</code>
-                        <p style="margin-top: 6px; margin-bottom: 0; font-size: 13px; color: var(--text-muted);">${f.purpose}</p>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = `
-                <div>
-                    <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 4px; color: var(--primary); border: none; padding: 0;">${info.title}</h2>
-                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Role: ${info.roles}</span>
-                </div>
-                
-                <div class="card" style="margin: 0; padding: 18px; background: rgba(0,0,0,0.2);">
-                    <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px;">Description</h3>
-                    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-muted);">${info.desc}</p>
-                </div>
-
-                <div class="card" style="margin: 0; padding: 18px; background: rgba(0,0,0,0.2);">
-                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px;">Core Definitions & Functions</h3>
-                    ${functionsHtml}
-                </div>
-
-                <div class="card" style="margin: 0; padding: 18px; background: rgba(0,0,0,0.2);">
-                    <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px;">Architecture Integration</h3>
-                    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-muted);">${info.integration}</p>
-                </div>
-            `;
-            lucide.createIcons();
-        }
     </script>
 </body>
 </html>

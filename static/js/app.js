@@ -23,23 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     avatar.setAttribute("data-tooltip", `${user.name || user.email} (${user.role.toUpperCase()})`);
                 }
                 
-                if (user.role === 'admin') {
-                    document.getElementById("admin-panel-link").style.display = "flex";
-                    const docLink = document.getElementById("docs-panel-link");
-                    if (docLink) docLink.style.display = "flex";
-                    document.getElementById("nav-registry-btn").style.display = "flex";
-                    document.getElementById("nav-audits-btn").style.display = "flex";
-                    const regActivity = document.getElementById("reg-activity");
-                    if (regActivity) regActivity.style.display = "block";
-                } else {
-                    document.getElementById("admin-panel-link").style.display = "none";
-                    const docLink = document.getElementById("docs-panel-link");
-                    if (docLink) docLink.style.display = "none";
-                    document.getElementById("nav-registry-btn").style.display = "flex";
-                    document.getElementById("nav-audits-btn").style.display = "none";
-                    const regActivity = document.getElementById("reg-activity");
-                    if (regActivity) regActivity.style.display = "none";
-                }
+                document.getElementById("admin-panel-link").style.display = "flex";
+                const docLink = document.getElementById("docs-panel-link");
+                if (docLink) docLink.style.display = "flex";
+                document.getElementById("nav-registry-btn").style.display = "flex";
+                document.getElementById("nav-audits-btn").style.display = "flex";
+                const regActivity = document.getElementById("reg-activity");
+                if (regActivity) regActivity.style.display = "block";
                 if (window.lucide) lucide.createIcons();
             } catch (e) {
                 console.error("checkAuth crash:", e);
@@ -394,8 +384,10 @@ document.addEventListener("DOMContentLoaded", () => {
             dbProjects.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id, undefined, { sensitivity: 'base', numeric: true }));
             
             const dbProjIds = dbProjects.map(p => p.id);
+            const currentUploadProj = document.getElementById("upload-project")?.value?.trim()?.replace(/\s+/g, "_");
             for (let i = sessionCustomProjects.length - 1; i >= 0; i--) {
-                if (dbProjIds.includes(sessionCustomProjects[i])) {
+                const proj = sessionCustomProjects[i];
+                if (dbProjIds.includes(proj) || (currentUploadProj !== proj)) {
                     sessionCustomProjects.splice(i, 1);
                 }
             }
@@ -420,6 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
     refreshProjectDropdowns();
+    document.getElementById("upload-project")?.addEventListener("change", refreshProjectDropdowns);
 
     const updateDocumentFilter = (project_ids) => {
         const docInput = document.getElementById("document-filter");
@@ -432,7 +425,26 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/api/documents?project=${encodeURIComponent(projParam)}`).then(r => r.json()).then(d => {
             const docs = d.documents || [];
             docs.sort((a, b) => (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: 'base', numeric: true }));
-            mkMultiSelect(docInput, docMenu, docs, "All Documents");
+            mkMultiSelect(docInput, docMenu, docs, "All Documents", (selectedDocIds) => {
+                const projInput = document.getElementById("project-filter");
+                if (projInput && projInput.getSelectedValues) {
+                    const selectedProjIds = projInput.getSelectedValues();
+                    if (selectedProjIds.length === 0 && selectedDocIds.length > 0) {
+                        const autoProjs = docs
+                            .filter(doc => selectedDocIds.includes(doc.id))
+                            .map(doc => doc.project_id)
+                            .filter((val, idx, self) => val && self.indexOf(val) === idx);
+                        if (autoProjs.length > 0) {
+                            projInput._msSelected = autoProjs;
+                            const displayList = projInput._msItems
+                                .filter(item => autoProjs.includes(item.id || item))
+                                .map(item => (item.name || item.id || '').replace(/_/g, " "));
+                            projInput.value = displayList.join(", ");
+                            projInput._msRender();
+                        }
+                    }
+                }
+            });
         }).catch(() => {});
     };
     
@@ -506,6 +518,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 return t;
             };
             
+            // Clean up LLM output: strip stray HTML tags, doc IDs, internal links
+            const sanitizeLLM = (text) => {
+                if (!text) return text;
+                return text
+                    .replace(/<html>|<\/html>|<body>|<\/body>|<div[^>]*>|<\/div>|<span[^>]*>|<\/span>/gi, '')
+                    .replace(/\bDOC-[A-F0-9]{8}\b/g, (m) => `Document`)
+                    .replace(/\b\d{4}-\d{2}-\d{2}_[^\s]+\.\w+\b/g, '')
+                    .trim();
+            };
             const ex = (t) => {
                 const s = d.answer.indexOf(`<${t}>`);
                 if (s < 0) return null;
@@ -515,7 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const end = e >= 0 ? e : n >= 0 ? Math.min(e < 0 ? 1/0 : e, n) : a.length;
                 return a.slice(0, end).trim();
             };
-            const conc = ex('concise'), elab = ex('elaborate');
+            const conc = sanitizeLLM(ex('concise')), elab = sanitizeLLM(ex('elaborate'));
             try {
                 parsedC = parseMD(rpl(conc || elab || d.answer));
                 parsedE = parseMD(rpl(elab || d.answer));
@@ -523,8 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 parsedC = parsedE = d.answer;
             }
             
-            rawC = conc || elab || d.answer;
-            rawE = elab || d.answer;
+            rawC = conc || elab || sanitizeLLM(d.answer);
+            rawE = elab || sanitizeLLM(d.answer);
             currentLang = "English";
             translationCache = {
                 "English": { concise: parsedC, elaborate: parsedE }
@@ -577,14 +598,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
                     try {
                         const currentRaw = (sumMode === 'concise') ? rawC : rawE;
-                        const creds = JSON.parse(localStorage.getItem("scl_auth") || "{}");
-                        const key = creds.api_key || "";
                         const res = await fetch("/api/translate", {
                             method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${key}`
-                            },
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ text: currentRaw, target_lang: currentLang })
                         }).then(r => r.json());
                         
@@ -632,9 +648,10 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const currentQuery = document.getElementById("query-input").value;
             d.citations.forEach((c, i) => {
-                const ht = highlightKW(c.text, currentQuery);
+                const snippet = c.text.length > 500 ? c.text.substring(0, 500) + '...' : c.text;
+                const ht = highlightKW(snippet, currentQuery);
                 const scoreBadge = `<span class="badge" style="background:rgba(56,189,248,0.1); border-color:rgba(56,189,248,0.3); color:#38bdf8; font-weight:600; margin-left:8px; font-size:10px;">Score: ${(c.confidence || 0.00).toFixed(2)}</span>`;
-                cl.innerHTML += `<details class="disclosure"><summary><span class="cit-num">[${i + 1}]</span> ${c.meeting_title}${scoreBadge}</summary><div><p><strong>Date:</strong> ${c.date} | <strong>Page:</strong> ${c.page_number || 1} | <strong>Project:</strong> ${c.project_id || 'Unknown'}</p><p style="margin-top:8px">${ht}</p><div style="margin-top:8px;display:flex;gap:6px"><button class="view-doc-btn" data-id="${c.meeting_id}" data-text="${c.text.replace(/"/g, '&quot;')}">View Doc</button><a href="/api/download/${c.meeting_id}" class="dl-btn">↓ Download</a></div></div></details>`;
+                cl.innerHTML += `<details class="disclosure"><summary><span class="cit-num">[${i + 1}]</span> ${c.meeting_title}${scoreBadge}</summary><div><p><strong>Date:</strong> ${c.date} | <strong>Page:</strong> ${c.page_number || 1} | <strong>Project:</strong> ${c.project_id || 'Unknown'}</p><div style="margin-top:8px; padding:12px; background:var(--bg); border-left:3px solid #38bdf8; border-radius:4px; font-size:13px; line-height:1.6; color:var(--text);">${ht}</div><div style="margin-top:8px;display:flex;gap:6px"><button class="view-doc-btn" data-id="${c.meeting_id}" data-text="${c.text.replace(/"/g, '&quot;')}">View Doc</button><a href="/api/download/${c.meeting_id}" class="dl-btn">↓ Download</a></div></div></details>`;
             });
             try { renderGraph(d.graph || { nodes: [], edges: [] }); } catch (e) {}
             try { renderDecisions((d.graph || {}).decisions || []); } catch (e) {}
@@ -700,6 +717,8 @@ document.addEventListener("DOMContentLoaded", () => {
             let statusIndicator = '';
             if (f.status === 'done') {
                 statusIndicator = `<span class="file-status done" style="color: #10b981; font-weight: 600;">✓ Ingested</span>`;
+            } else if (f.status === 'processing') {
+                statusIndicator = `<span class="file-status processing" style="color: #38bdf8; font-weight: 600;">⟳ Processing...</span>`;
             } else if (f.status === 'duplicate') {
                 statusIndicator = `<span class="file-status duplicate" style="color: #f59e0b; font-weight: 600;">⚠ Duplicate</span>`;
             } else if (f.status === 'error') {
@@ -736,9 +755,35 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const af = (files) => {
-        for (const f of files) fileQueue.push({ file: f, status: 'pending', xhr: null });
+        for (const f of files) fileQueue.push({ file: f, status: 'pending', xhr: null, _pollTimer: null });
         rq();
         document.getElementById("file-input").value = '';
+    };
+
+    // ponytail: poll every 1.5s until the document shows up in the registry, then flip to done
+    const pollIngestionStatus = (item) => {
+        if (!item.docId) return;
+        fetch(`/api/documents?project=${encodeURIComponent(document.getElementById("upload-project")?.value?.trim() || "")}`)
+            .then(r => r.json())
+            .then(d => {
+                const found = (d.documents || []).some(x => x.id === item.docId);
+                if (found) {
+                    clearInterval(item._pollTimer);
+                    item._pollTimer = null;
+                    item.status = "done";
+                    rq();
+                    setTimeout(() => {
+                        item.fadeClass = "fade-out";
+                        rq();
+                        setTimeout(() => {
+                            const idx = fileQueue.indexOf(item);
+                            if (idx > -1) fileQueue.splice(idx, 1);
+                            rq();
+                        }, 1000);
+                    }, 400);
+                }
+            })
+            .catch(() => {});
     };
 
     const dz = document.getElementById("drop-zone"), fi2 = document.getElementById("file-input");
@@ -823,10 +868,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (d.status === "duplicate") {
                     item.status = "duplicate";
                 } else if (d.status === "success") {
-                    item.status = "done";
+                    if (d.state === "processing") {
+                        item.status = "processing";
+                        item.docId = d.document_id || "";
+                        item._pollTimer = setInterval(() => pollIngestionStatus(item), 1500);
+                    } else {
+                        item.status = "done";
+                        item.docId = d.document_id || "";
+                    }
                     try {
                         refreshProjectDropdowns();
                         loadRegistry();
+                        if (document.getElementById("registry-tab") && document.getElementById("registry-tab").classList.contains("active")) {
+                            const prevSel2 = document.querySelector(".reg-project-item.sel");
+                            if (prevSel2) {
+                                const pid2 = prevSel2.querySelector("span").textContent.trim().replace(/\s+/g, "_");
+                                loadProjectDocs(pid2);
+                            }
+                        }
+                        const docInput = document.getElementById("document-filter");
+                        if (docInput) {
+                            const projEl = document.getElementById("project-filter");
+                            const selectedProj = (projEl && projEl.getSelectedValues) ? projEl.getSelectedValues() : [];
+                            if (selectedProj.length) {
+                                updateDocumentFilter(selectedProj);
+                            } else {
+                                updateDocumentFilter([]);
+                            }
+                        }
                     } catch (e) {
                         console.error("Realtime list refresh failed", e);
                     }
@@ -875,9 +944,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     }, 1000); // 1 sec fade-out duration
                 }, 1500);
             } else if (item.status === "error") {
-                if (fileQueue.every(f => f.status === 'done' || f.status === 'error' || f.status === 'duplicate')) {
-                    showDoneToast();
-                }
+                // Auto-fade failed items after 3 seconds
+                setTimeout(() => {
+                    item.fadeClass = "fade-out";
+                    rq();
+                    setTimeout(() => {
+                        const idx = fileQueue.indexOf(item);
+                        if (idx > -1) fileQueue.splice(idx, 1);
+                        rq();
+                        
+                        if (fileQueue.length === 0 || fileQueue.every(f => f.status === 'done' || f.status === 'error' || f.status === 'duplicate')) {
+                            showDoneToast();
+                        }
+                    }, 1000);
+                }, 3000);
             }
         }));
         
@@ -937,7 +1017,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     loadActivity(p.project_id);
                 });
                 sb.appendChild(el);
-                if (idx === 0) {
+                if (idx === 0 && !sb.querySelector(".reg-project-item.sel")) {
                     el.click();
                 }
             });

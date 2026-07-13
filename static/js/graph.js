@@ -13,7 +13,7 @@ function renderGraph(graph) {
                 group:'nodes', data:{id:n.id,label:(n.title||'').length>18?n.title.substr(0,16)+'…':n.title,dept:n.department||'',highlight:n.highlight||false}
             })),
             ...edges.map(e => ({
-                group:'edges', data:{id:e.source+'-'+e.target,source:e.source,target:e.target,type:e.type||'',rationale:e.rationale||''}
+                group:'edges', data:{id:e.source+'-'+e.target,source:e.source,target:e.target,type:e.type||'',rationale:e.rationale||'',label:e.label||''}
             }))
         ],
         style: [
@@ -24,6 +24,7 @@ function renderGraph(graph) {
             {selector:'node[dept*="Pack"]', style:{'border-color':'#c084fc'}},
             {selector:'node[dept*="Quality"]', style:{'border-color':'#f59e0b'}},
             {selector:'edge', style:{'width':2,'line-color':'#555','target-arrow-color':'#555','target-arrow-shape':'triangle','curve-style':'bezier','transition-property':'opacity','transition-duration':'0.2s'}},
+            {selector:'edge', style:{'color':'#888','font-size':'9px','text-rotation':'autorotate','text-margin-y':-10,'content':'data(label)','text-wrap':'wrap','text-max-width':60}},
             {selector:'edge[type="triggered_by"]', style:{'line-color':'#f43f5e','line-style':'dashed','target-arrow-color':'#f43f5e'}},
             {selector:'.faded', style:{'opacity':0.15}},
             {selector:'.highlighted', style:{'border-width':3,'border-color':'#00e5ff'}}

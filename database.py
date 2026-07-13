@@ -28,13 +28,23 @@ def init_db():
                  "CREATE TRIGGER IF NOT EXISTS h_summaries_au AFTER UPDATE ON hierarchical_summaries BEGIN INSERT INTO hierarchical_summaries_fts(hierarchical_summaries_fts, rowid, summary_text) VALUES ('delete', old.rowid, old.summary_text); INSERT INTO hierarchical_summaries_fts(rowid, summary_text) VALUES (new.rowid, new.summary_text); END"]:
         try: c.execute(trig)
         except: pass
-    for col in ["project_id TEXT DEFAULT 'Unknown'", "source_type TEXT", "content_hash TEXT", "created_at TEXT", "file_size_bytes INTEGER DEFAULT 0", "ocr_quality TEXT DEFAULT 'auto'", "corrections_count INTEGER DEFAULT 0", "ocr_json TEXT", "ocr_markdown TEXT", "ocr_engine TEXT", "page_count INTEGER DEFAULT 0", "uploaded_by TEXT DEFAULT 'Anonymous'"]:
+    for col in ["project_id TEXT DEFAULT 'Unknown'", "source_type TEXT", "content_hash TEXT", "created_at TEXT", "file_size_bytes INTEGER DEFAULT 0", "ocr_quality TEXT DEFAULT 'auto'", "corrections_count INTEGER DEFAULT 0", "ocr_json TEXT", "ocr_markdown TEXT", "ocr_engine TEXT", "page_count INTEGER DEFAULT 0", "uploaded_by TEXT DEFAULT 'Anonymous'", "status TEXT DEFAULT 'pending'"]:
         try: c.execute(f"ALTER TABLE meetings ADD COLUMN {col};")
         except: pass
     
     # Try adding page_number to chunks table if it is an existing schema
     try: c.execute("ALTER TABLE chunks ADD COLUMN page_number INTEGER DEFAULT 1;")
     except: pass
+
+    # Performance indexes
+    for idx in [
+        "CREATE INDEX IF NOT EXISTS idx_meetings_project ON meetings(project_id)",
+        "CREATE INDEX IF NOT EXISTS idx_meetings_status ON meetings(status)",
+        "CREATE INDEX IF NOT EXISTS idx_meetings_created ON meetings(created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_chunks_meeting ON chunks(meeting_id)",
+    ]:
+        try: c.execute(idx)
+        except: pass
 
     conn.commit()
     conn.close()

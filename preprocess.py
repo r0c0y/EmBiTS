@@ -48,20 +48,43 @@ def _deskew(image: np.ndarray) -> np.ndarray:
 
 
 def preprocess_image(img: Image.Image) -> Image.Image:
-    """Run full preprocessing pipeline on a PIL Image and return a PIL Image."""
-    # 1. to OpenCV
-    cv = _to_cv2(img)
-    # 2. Grayscale + denoise
-    gray = cv2.cvtColor(cv, cv2.COLOR_BGR2GRAY) if cv.ndim == 3 else cv
-    denoised = cv2.fastNlMeansDenoising(gray, h=10, templateWindowSize=7, searchWindowSize=21)
-    # 3. Deskew
-    denoised = cv2.cvtColor(denoised, cv2.COLOR_GRAY2BGR)
-    deskewed = _deskew(denoised)
-    gray2 = cv2.cvtColor(deskewed, cv2.COLOR_BGR2GRAY)
-    # 4. Binarization (adaptive)
+    """Run professional preprocessing on a PIL Image for maximum Tesseract OCR accuracy.
+
+    Steps:
+      1. Correctly blend transparency/alpha channel with a white background.
+      2. Convert to grayscale.
+      3. Deskew the text layout.
+      4. De-noise using bilateral filtering (preserves text edges).
+      5. Adaptive thresholding with optimal block size to handle uneven illumination.
+      6. Despeckle using a median blur.
+    """
+    # 1. Correctly handle transparency / alpha channel
+    if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+        background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        background.paste(img)
+        img = background.convert("RGB")
+    else:
+        img = img.convert("RGB")
+        
+    # 2. Convert to OpenCV
+    arr = np.array(img)
+    cv_img = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+    
+    # 3. Grayscale
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    
+    # 4. Deskew
+    gray = _deskew(gray)
+    
+    # 5. Denoise with Bilateral Filter (preserves text edges better than fastNlMeans)
+    denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+    
+    # 6. Adaptive Thresholding with a larger window size (25) to prevent thin character erosion
     bin_img = cv2.adaptiveThreshold(
-        gray2, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3
+        denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 9
     )
-    # 5. Despeckle (median blur)
+    
+    # 7. Despeckle with median blur
     clean = cv2.medianBlur(bin_img, 3)
-    return _to_pil(clean)
+    
+    return Image.fromarray(clean)

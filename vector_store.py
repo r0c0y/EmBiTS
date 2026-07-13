@@ -93,9 +93,26 @@ def vector_search(query_vec: list, project_id: str = None, doc_id: str = None, t
         
     return results
 
+def save_embeddings_batch(embeddings_map: dict):
+    """Save multiple embeddings in a single SQLite transaction."""
+    if not embeddings_map:
+        return
+    conn = get_db_connection(); c = conn.cursor()
+    try:
+        c.executemany(
+            "INSERT OR REPLACE INTO chunk_embeddings (chunk_id, embedding) VALUES (?, ?)",
+            [(chunk_id, pack_vector(vec)) for chunk_id, vec in embeddings_map.items() if vec]
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Failed to save batch embeddings: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
 def build_missing_embeddings():
     """Find any text chunks that are missing embeddings and generate them."""
-    from embedder import get_embedding
+    from embedder import get_embeddings_batch
     conn = get_db_connection(); c = conn.cursor()
     c.execute("SELECT id, chunk_text FROM chunks WHERE id NOT IN (SELECT chunk_id FROM chunk_embeddings)")
     missing = [dict(r) for r in c.fetchall()]
@@ -103,15 +120,14 @@ def build_missing_embeddings():
     
     if not missing:
         return
-        
-    print(f"Generating local vector embeddings for {len(missing)} text chunks...")
-    for idx, item in enumerate(missing, 1):
-        vec = get_embedding(item["chunk_text"])
-        if vec:
-            save_embedding(item["id"], vec)
-            if idx % 10 == 0 or idx == len(missing):
-                print(f"Vectorized {idx}/{len(missing)} chunks.")
-        else:
-            print("Warning: Local embedding model is not responding. Skipping chunk vectorization.")
-            break
+
+    # Batch process embeddings (50 at a time)
+    chunk_ids = [item["id"] for item in missing]
+    texts = [item["chunk_text"] for item in missing]
+    
+    embeddings = get_embeddings_batch(texts, batch_size=50)
+    
+    # Save all embeddings in a single transaction
+    embs_map = {chunk_id: vec for chunk_id, vec in zip(chunk_ids, embeddings) if vec}
+    save_embeddings_batch(embs_map)
 

@@ -18,8 +18,6 @@ PATTERNS = {
 def detect_conflicts(citations):
     conn = get_db_connection(); cur = conn.cursor()
     cids = {c["meeting_id"] for c in citations}
-    if "SCL-555-DS-001" not in cids:
-        citations = list(citations) + [{"meeting_id": "SCL-555-DS-001", "meeting_title": "Design Specification"}]
     params = {}
     for c in citations:
         cur.execute("SELECT transcript_text FROM meetings WHERE id=?", (c["meeting_id"],))

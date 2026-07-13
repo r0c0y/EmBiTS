@@ -1,4 +1,4 @@
-import os, re, hashlib, io, tempfile
+import os, hashlib, io, tempfile, re
 from datetime import datetime
 from PIL import Image
 import pdfplumber
@@ -31,11 +31,58 @@ def detect_date(text):
 
 def chunk_text(text, size=800, overlap=200):
     text = text or ""
-    chunks, i = [], 0
-    while i < len(text):
-        chunks.append(text[i:i+size])
-        i += size - overlap
-        if i >= len(text): break
+    if not text.strip():
+        return [""]
+
+    # Detect form/template structure: repeated "Field Name:" or "Field Name :" patterns
+    form_lines = text.split("\n")
+    form_field_count = sum(1 for l in form_lines if re.match(r'^[A-Za-z][A-Za-z /-]+[?:]\s*$', l.strip()) or re.match(r'^[A-Za-z][A-Za-z /-]+[?:].{0,20}$', l.strip()))
+    is_form_like = form_field_count >= 3 and len(text) < size * 3
+
+    # For form-like documents, keep everything as a single chunk (short templates)
+    if is_form_like:
+        return [text.strip()]
+
+    # Split on paragraph boundaries (double newlines) first
+    paragraphs = re.split(r'\n\s*\n', text)
+    paragraphs = [p.strip() for p in paragraphs if p.strip()]
+
+    if not paragraphs:
+        return [""]
+
+    chunks = []
+    current = ""
+    for p in paragraphs:
+        candidate = (current + "\n\n" + p).strip() if current else p
+        if len(candidate) <= size:
+            current = candidate
+        else:
+            if current:
+                chunks.append(current)
+            if len(p) > size:
+                sentences = re.split(r'(?<=[.!?])\s+', p)
+                if len(sentences) > 1:
+                    cur_s = ""
+                    for s in sentences:
+                        cand = (cur_s + " " + s).strip() if cur_s else s
+                        if len(cand) <= size:
+                            cur_s = cand
+                        else:
+                            if cur_s:
+                                chunks.append(cur_s)
+                            cur_s = s
+                    if cur_s:
+                        chunks.append(cur_s)
+                else:
+                    for i in range(0, len(p), size - overlap):
+                        chunks.append(p[i:i+size].strip())
+                        if i + size >= len(p):
+                            break
+            else:
+                current = p
+    if current:
+        chunks.append(current)
+
     return chunks or [""]
 
 def content_hash(raw):
@@ -84,9 +131,23 @@ def _extract_structured(f, ext):
         wb = load_workbook(f, read_only=True, data_only=True)
         t = []
         for s in wb.worksheets:
-            for r in s.iter_rows(values_only=True):
-                row = " ".join(str(c) for c in r if c is not None)
-                if row.strip(): t.append(row)
+            all_rows = [list(r) for r in s.iter_rows(values_only=True)]
+            if not all_rows:
+                continue
+            col_count = max(len(r) for r in all_rows) if all_rows else 0
+            if col_count == 0:
+                continue
+            header_sep = False
+            for r_idx, row_data in enumerate(all_rows):
+                row_text = [str(c) if c is not None else "" for c in row_data]
+                while len(row_text) < col_count:
+                    row_text.append("")
+                cleaned = [c.replace("\n", " ").strip() for c in row_text]
+                line = "| " + " | ".join(cleaned) + " |"
+                t.append(line)
+                if r_idx == 0:
+                    sep = "|" + "|".join("---" for _ in range(col_count)) + "|"
+                    t.append(sep)
         return "\n".join(t)
     if ext == ".pptx":
         prs = Presentation(f)
@@ -105,13 +166,18 @@ def _save_temp(file_obj, suffix):
         except: pass
         return None
 
-def ingest(file_obj, filename, size=0, base_dir=None):
+def ingest(file_path, filename, size=0, base_dir=None):
     base_dir = base_dir or os.path.dirname(os.path.abspath(__file__))
     ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in EXTS:
         raise ValueError(f"Unsupported format: {ext}")
 
-    structured = _extract_structured(file_obj, ext)
+    structured = None
+    # For text-based formats (txt, docx, xlsx, pptx, csv, md, json), read as file object
+    if ext in (".txt", ".csv", ".md", ".json", ".docx", ".xlsx", ".xls", ".pptx"):
+        with open(file_path, "rb") as f:
+            structured = _extract_structured(f, ext)
+    
     if structured is not None:
         doc_date = detect_date(structured)
         return {
@@ -126,15 +192,10 @@ def ingest(file_obj, filename, size=0, base_dir=None):
         }
 
     mgr = get_ocr_manager()
-    tmp_path = _save_temp(file_obj, ext)
-    if not tmp_path:
-        raise ValueError("Failed to save temporary file for OCR processing")
-
     try:
-        ocr_result = mgr.process_with_fallback(tmp_path, ext)
-    finally:
-        try: os.unlink(tmp_path)
-        except Exception: pass
+        ocr_result = mgr.process_with_fallback(file_path, ext)
+    except Exception as e:
+        raise ValueError(f"OCR processing failed: {e}") from e
 
     if not ocr_result.text.strip():
         raise ValueError("No text could be extracted by OCR engine")
